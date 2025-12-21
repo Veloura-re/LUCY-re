@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { handleApiError, requireRole, requireSchoolLinked } from '@/lib/security';
+import { logActivity } from '@/lib/audit';
 
 // GET: List all students in the school
 export async function GET(request: Request) {
@@ -76,6 +77,15 @@ export async function POST(request: Request) {
                 dob: new Date(),
                 studentCode: `ST-${Math.random().toString(36).substring(2, 10).toUpperCase()}`
             }
+        });
+
+        // Log Activity
+        await logActivity({
+            userId: user.id,
+            action: 'CREATE_STUDENT',
+            resourceType: 'STUDENT',
+            resourceId: student.id,
+            after: student
         });
 
         return NextResponse.json({ student });

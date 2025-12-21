@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
+import { logActivity } from '@/lib/audit';
 
 export async function DELETE(request: Request) {
     const supabase = await createClient();
@@ -41,6 +42,15 @@ export async function DELETE(request: Request) {
                 });
             }
         }
+
+        // Log Activity
+        await logActivity({
+            userId: user.id,
+            action: 'DELETE_STAFF_OR_INVITE',
+            resourceType: 'USER/INVITE',
+            resourceId: email,
+            before: { email }
+        });
 
         return NextResponse.json({ success: true });
     } catch (e) {

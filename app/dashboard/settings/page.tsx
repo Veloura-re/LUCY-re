@@ -33,7 +33,8 @@ export default function SettingsPage() {
 
     const [schoolForm, setSchoolForm] = useState({
         name: "",
-        schoolCode: ""
+        schoolCode: "",
+        logoUrl: ""
     });
 
     const [passwordData, setPasswordData] = useState({
@@ -84,11 +85,47 @@ export default function SettingsPage() {
                 setSchoolData(data.school);
                 setSchoolForm({
                     name: data.school.name,
-                    schoolCode: data.school.schoolCode
+                    schoolCode: data.school.schoolCode,
+                    logoUrl: data.school.logoUrl || ""
                 });
             }
         } catch (e) {
             console.error(e);
+        }
+    };
+
+    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setSaving(true);
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Math.random()}.${fileExt}`;
+            const filePath = `logos/${fileName}`;
+
+            const { data, error } = await supabase.storage
+                .from('school-assets')
+                .upload(filePath, file);
+
+            if (error) throw error;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('school-assets')
+                .getPublicUrl(filePath);
+
+            setSchoolForm(prev => ({ ...prev, logoUrl: publicUrl }));
+            // Also trigger a save automatically for the logo
+            await fetch('/api/school/settings', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...schoolForm, logoUrl: publicUrl })
+            });
+        } catch (e) {
+            console.error(e);
+            alert("Upload failed. Verify storage bucket permissions.");
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -421,14 +458,35 @@ export default function SettingsPage() {
                                 </CardContent>
                             </Card>
 
-                            <Card className="bg-zinc-950/10 border border-zinc-900 rounded-[2.5rem] p-8 border-dashed">
+                            <Card className="bg-zinc-950/10 border border-zinc-900 rounded-[2.5rem] p-8 border-dashed group relative overflow-hidden">
                                 <div className="flex flex-col items-center justify-center py-10 text-center">
-                                    <div className="w-16 h-16 rounded-2xl bg-zinc-900/50 border border-zinc-800 flex items-center justify-center mb-6">
-                                        <Zap className="w-8 h-8 text-zinc-800" />
-                                    </div>
-                                    <h4 className="text-sm font-black text-zinc-500 uppercase tracking-widest">Advanced Logo Engine</h4>
-                                    <p className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest mt-2">Vectorized organizational branding coming in Phase 9</p>
-                                    <Button variant="ghost" disabled className="mt-6 opacity-30 text-[9px] font-black uppercase tracking-widest border border-zinc-900 rounded-xl h-10">Upload Vector Map</Button>
+                                    {schoolForm.logoUrl ? (
+                                        <div className="relative mb-6 group">
+                                            <div className="w-32 h-32 rounded-3xl bg-zinc-900 overflow-hidden border-2 border-eduGreen-600/50 flex items-center justify-center">
+                                                <img src={schoolForm.logoUrl} alt="School Logo" className="w-full h-full object-contain" />
+                                            </div>
+                                            <label className="absolute -bottom-2 -right-2 w-10 h-10 bg-zinc-950 border border-zinc-800 rounded-full flex items-center justify-center cursor-pointer hover:border-eduGreen-500 transition-all shadow-xl">
+                                                <Zap className="w-4 h-4 text-eduGreen-500" />
+                                                <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
+                                            </label>
+                                        </div>
+                                    ) : (
+                                        <div className="w-16 h-16 rounded-2xl bg-zinc-900/50 border border-zinc-800 flex items-center justify-center mb-6 transition-all group-hover:border-eduGreen-900/50">
+                                            <Zap className="w-8 h-8 text-zinc-800 group-hover:text-eduGreen-500 transition-colors" />
+                                        </div>
+                                    )}
+
+                                    <h4 className="text-sm font-black text-zinc-500 uppercase tracking-widest">Institutional Branding Engine</h4>
+                                    <p className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest mt-2">{schoolForm.logoUrl ? "Organizational identity verified" : "Vectorized organizational branding enabled"}</p>
+
+                                    {!schoolForm.logoUrl && (
+                                        <label className="mt-6">
+                                            <div className="cursor-pointer px-8 py-3 bg-zinc-950 border border-zinc-900 rounded-xl text-[9px] font-black uppercase tracking-widest hover:border-eduGreen-500 hover:text-white transition-all">
+                                                Initialize Brand Map
+                                            </div>
+                                            <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
+                                        </label>
+                                    )}
                                 </div>
                             </Card>
                         </div>

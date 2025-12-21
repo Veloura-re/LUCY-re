@@ -24,13 +24,14 @@ export async function GET() {
 export async function PATCH(request: Request) {
     try {
         const user = await requireRole(['SUPERADMIN', 'PRINCIPAL']);
-        const { name, schoolCode } = await request.json();
+        const { name, schoolCode, logoUrl } = await request.json();
 
         const school = await prisma.school.update({
             where: { id: user.schoolId! },
             data: {
                 name,
-                schoolCode
+                schoolCode,
+                logoUrl
             }
         });
 

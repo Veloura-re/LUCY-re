@@ -97,6 +97,7 @@ model School {
   name       String
   schoolCode String       @unique
   domain     String?
+  logoUrl    String?
   status     SchoolStatus @default(PENDING)
   createdAt  DateTime     @default(now())
 

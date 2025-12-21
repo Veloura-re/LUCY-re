@@ -44,6 +44,7 @@ export async function GET(request: Request) {
             id: i.id,
             name: null,
             email: i.email,
+            token: i.token, // Include token for manual copy
             createdAt: i.createdAt,
             status: 'PENDING'
         }));

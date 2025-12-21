@@ -279,9 +279,23 @@ export default function TeachersPage() {
                                                 <span className="text-[9px] font-black text-eduGreen-500 uppercase tracking-widest">Active Access</span>
                                             </div>
                                         ) : (
-                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-950/20 border border-amber-900/30">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
-                                                <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest">Invite Sent</span>
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-950/20 border border-amber-900/30">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+                                                    <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest">Invite Sent</span>
+                                                </div>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        const link = `${window.location.origin}/invite/${teacher.token}`;
+                                                        navigator.clipboard.writeText(link);
+                                                        alert("Invite link copied to clipboard");
+                                                    }}
+                                                    className="h-8 px-3 rounded-xl bg-zinc-950 border border-zinc-900 text-[8px] font-black uppercase tracking-widest text-zinc-600 hover:text-white transition-all"
+                                                >
+                                                    <Copy className="w-3 h-3 mr-1.5" /> Copy Code
+                                                </Button>
                                             </div>
                                         )}
                                         {teacher.status === 'ACTIVE' && (
