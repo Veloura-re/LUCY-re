@@ -1,26 +1,80 @@
 @import "tailwindcss";
+@plugin "tailwindcss-animate";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  --font-inter: var(--font-inter);
+  --font-poppins: var(--font-poppins);
 
-@theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  /* Primary Palette - EduGreen */
+  --color-eduGreen-100: #D8F7E8;
+  --color-eduGreen-300: #3BD68D;
+  --color-eduGreen-400: #1AA768;
+  --color-eduGreen-500: #147A52;
+  --color-eduGreen-600: #0F5E3F;
+
+  /* Neutral Palette - Gray */
+  --color-gray-100: #F1F3F4;
+  --color-gray-300: #D0D3D6;
+  --color-gray-500: #6E7377;
+  --color-gray-700: #2A2F32;
+  --color-gray-900: #101314;
+
+  /* Semantic Colors */
+  --color-success: #2ECC71;
+  --color-warning: #F1C40F;
+  --color-error: #E74C3C;
+  --color-info: #3498DB;
+
+  /* Dark Mode */
+  --color-dm-background: #0A0C0C;
+  --color-dm-surface: #121616;
+  --color-dm-card: #1B2020;
+  --color-dm-border: #2C3333;
+  --color-dm-textMain: #3BD68D;
+  --color-dm-textSoft: #1AA768;
+  --color-dm-primary: #3BD68D;
+  /* Standardized to EduGreen-500 */
+
+  /* Border Radius */
+  --radius-card: 16px;
+  --radius-button: 12px;
+  --radius-input: 10px;
+  --radius-chip: 20px;
+
+  /* Shadows */
+  --shadow-soft: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-hover: 0 4px 22px rgba(0, 0, 0, 0.12);
+  --shadow-elevation: 0 0 35px rgba(0, 0, 0, 0.15);
+  --shadow-inputFocus: 0 0 0 2px #1AA76840;
+}
+
+:root {
+  --background: #09090b;
+  --foreground: #fafafa;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Use the dm colors for root variables in dark mode if desired, or keep specific dark classes */
+    --background: #0A0C0C;
+    --foreground: #3BD68D;
   }
 }
 
 body {
-  background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--background);
+  font-family: var(--font-inter), sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-poppins), sans-serif;
 }
