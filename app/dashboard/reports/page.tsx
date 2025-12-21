@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { BarChart3, TrendingUp, Users, BookOpen, Download, Filter, Sparkles, ShieldCheck, ChevronRight, Activity } from "lucide-react";
 import { SpringingLoader } from "@/components/dashboard/springing-loader";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export default function ReportsPage() {
     const [loading, setLoading] = useState(true);
@@ -62,24 +63,49 @@ export default function ReportsPage() {
 
             {/* Quick Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {[
-                    { label: "Attendance Velocity", value: data.summary?.avgAttendance || "100%", trend: "+1.4%", icon: TrendingUp, color: "text-eduGreen-500" },
-                    { label: "Syllabus Saturation", value: data.summary?.examCompletion || "0%", trend: "On Track", icon: BookOpen, color: "text-emerald-500" },
-                    { label: "Active Nodes", value: data.summary?.activeNodes || "0", trend: "Steady", icon: Activity, color: "text-cyan-500" }
-                ].map((stat, i) => (
-                    <Card key={i} className="bg-zinc-950/40 backdrop-blur-md border-zinc-900 rounded-[2.5rem] overflow-hidden group">
+                <Link href="/dashboard/reports/attendance" className="block group">
+                    <Card className="bg-zinc-950/40 backdrop-blur-md border-zinc-900 rounded-[2.5rem] overflow-hidden group-hover:border-eduGreen-900/50 transition-all">
                         <CardContent className="p-8">
                             <div className="flex justify-between items-start mb-4">
                                 <div className="p-3 bg-zinc-900 rounded-2xl border border-zinc-800 group-hover:border-eduGreen-900/30 transition-all">
-                                    <stat.icon className={cn("w-5 h-5", stat.color)} />
+                                    <TrendingUp className="w-5 h-5 text-eduGreen-500" />
                                 </div>
-                                <span className="text-[10px] font-black text-eduGreen-600 bg-eduGreen-950/20 px-2 py-1 rounded-full">{stat.trend}</span>
+                                <span className="text-[10px] font-black text-eduGreen-600 bg-eduGreen-950/20 px-2 py-1 rounded-full">+1.4%</span>
                             </div>
-                            <div className="text-4xl font-black text-dm-textMain mb-1 tracking-tighter">{stat.value}</div>
-                            <p className="text-[10px] text-zinc-600 font-black uppercase tracking-widest">{stat.label}</p>
+                            <div className="text-4xl font-black text-dm-textMain mb-1 tracking-tighter">{data.summary?.avgAttendance || "100%"}</div>
+                            <p className="text-[10px] text-zinc-600 font-black uppercase tracking-widest flex items-center justify-between">
+                                Attendance Velocity
+                                <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                            </p>
                         </CardContent>
                     </Card>
-                ))}
+                </Link>
+
+                <Card className="bg-zinc-950/40 backdrop-blur-md border-zinc-900 rounded-[2.5rem] overflow-hidden group">
+                    <CardContent className="p-8">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="p-3 bg-zinc-900 rounded-2xl border border-zinc-800 group-hover:border-eduGreen-900/30 transition-all">
+                                <BookOpen className="w-5 h-5 text-emerald-500" />
+                            </div>
+                            <span className="text-[10px] font-black text-eduGreen-600 bg-eduGreen-950/20 px-2 py-1 rounded-full">On Track</span>
+                        </div>
+                        <div className="text-4xl font-black text-dm-textMain mb-1 tracking-tighter">{data.summary?.examCompletion || "0%"}</div>
+                        <p className="text-[10px] text-zinc-600 font-black uppercase tracking-widest">Syllabus Saturation</p>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-zinc-950/40 backdrop-blur-md border-zinc-900 rounded-[2.5rem] overflow-hidden group">
+                    <CardContent className="p-8">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="p-3 bg-zinc-900 rounded-2xl border border-zinc-800 group-hover:border-eduGreen-900/30 transition-all">
+                                <Activity className="w-5 h-5 text-cyan-500" />
+                            </div>
+                            <span className="text-[10px] font-black text-eduGreen-600 bg-eduGreen-950/20 px-2 py-1 rounded-full">Steady</span>
+                        </div>
+                        <div className="text-4xl font-black text-dm-textMain mb-1 tracking-tighter">{data.summary?.activeNodes || "0"}</div>
+                        <p className="text-[10px] text-zinc-600 font-black uppercase tracking-widest">Active Nodes</p>
+                    </CardContent>
+                </Card>
             </div>
 
             <div className="grid lg:grid-cols-12 gap-8">

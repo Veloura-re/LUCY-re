@@ -266,13 +266,15 @@ export default function StudentsPage() {
                                                 </Button>
                                             </Link>
                                         )}
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="text-[10px] font-black text-zinc-800 uppercase tracking-[0.3em] hover:text-white hover:bg-zinc-800 transition-all rounded-lg"
-                                        >
-                                            Configure
-                                        </Button>
+                                        <Link href={`/dashboard/students/${student.id}`}>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="text-[10px] font-black text-zinc-800 uppercase tracking-[0.3em] hover:text-white hover:bg-zinc-800 transition-all rounded-lg"
+                                            >
+                                                Configure
+                                            </Button>
+                                        </Link>
                                     </div>
                                 </div>
                             ))

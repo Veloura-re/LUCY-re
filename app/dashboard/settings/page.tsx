@@ -16,7 +16,8 @@ export default function SettingsPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [userData, setUserData] = useState<any>(null);
-    const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications'>('profile');
+    const [schoolData, setSchoolData] = useState<any>(null);
+    const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications' | 'school'>('profile');
     const [formData, setFormData] = useState({
         name: "",
         bio: "",
@@ -28,6 +29,11 @@ export default function SettingsPage() {
             pushSignals: true,
             chatSounds: true
         }
+    });
+
+    const [schoolForm, setSchoolForm] = useState({
+        name: "",
+        schoolCode: ""
     });
 
     const [passwordData, setPasswordData] = useState({
@@ -58,6 +64,10 @@ export default function SettingsPage() {
                         chatSounds: true
                     }
                 });
+
+                if (data.user.role === 'PRINCIPAL' || data.user.role === 'SUPERADMIN') {
+                    fetchSchoolSettings();
+                }
             }
         } catch (e) {
             console.error(e);
@@ -66,15 +76,43 @@ export default function SettingsPage() {
         }
     };
 
+    const fetchSchoolSettings = async () => {
+        try {
+            const res = await fetch('/api/school/settings');
+            const data = await res.json();
+            if (data.school) {
+                setSchoolData(data.school);
+                setSchoolForm({
+                    name: data.school.name,
+                    schoolCode: data.school.schoolCode
+                });
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
     const handleSave = async () => {
         setSaving(true);
         try {
-            const res = await fetch('/api/user/settings', {
+            // Save User Settings
+            const userRes = await fetch('/api/user/settings', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             });
-            if (res.ok) {
+
+            // Save School Settings if applicable
+            if (activeTab === 'school') {
+                await fetch('/api/school/settings', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(schoolForm)
+                });
+                fetchSchoolSettings();
+            }
+
+            if (userRes.ok) {
                 // Success feedback
             }
         } catch (e) {
@@ -165,6 +203,9 @@ export default function SettingsPage() {
                         { id: 'profile', icon: User, label: "Profile Identity" },
                         { id: 'security', icon: Shield, label: "Security Layer" },
                         { id: 'notifications', icon: Bell, label: "Signal Feed" },
+                        ...(userData?.role === 'PRINCIPAL' || userData?.role === 'SUPERADMIN' ? [
+                            { id: 'school', icon: Zap, label: "Institutional Hub" }
+                        ] : [])
                     ].map((item) => (
                         <button
                             key={item.id}
@@ -327,6 +368,70 @@ export default function SettingsPage() {
                                 ))}
                             </CardContent>
                         </Card>
+                    )}
+
+                    {activeTab === 'school' && (
+                        <div className="space-y-8">
+                            <Card className="bg-zinc-950/50 backdrop-blur-2xl border-zinc-900 rounded-[2.5rem] overflow-hidden border-t-zinc-800/20 shadow-2xl">
+                                <CardHeader className="p-8 pb-4">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <Zap className="w-4 h-4 text-eduGreen-500" />
+                                        <span className="text-[10px] font-black text-eduGreen-500 uppercase tracking-[0.3em]">Institutional Core</span>
+                                    </div>
+                                    <CardTitle className="text-2xl font-black text-zinc-100 tracking-tight leading-tight">Workspace Identity</CardTitle>
+                                    <CardDescription className="text-zinc-600 font-bold uppercase tracking-widest text-[9px] mt-1">Foundational parameters for {schoolData?.name}</CardDescription>
+                                </CardHeader>
+                                <CardContent className="p-8 pt-6 space-y-10">
+                                    <div className="grid md:grid-cols-2 gap-8">
+                                        <div className="space-y-3">
+                                            <Label className="text-[10px] font-black text-zinc-700 uppercase tracking-[0.3em] ml-2">School Branding Name</Label>
+                                            <Input
+                                                value={schoolForm.name}
+                                                onChange={(e) => setSchoolForm(prev => ({ ...prev, name: e.target.value }))}
+                                                className="bg-zinc-900/30 border-zinc-800 text-white h-14 rounded-2xl focus:border-eduGreen-600 transition-all border-2 font-black"
+                                            />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <Label className="text-[10px] font-black text-zinc-700 uppercase tracking-[0.3em] ml-2">Internal Organization Code</Label>
+                                            <Input
+                                                value={schoolForm.schoolCode}
+                                                onChange={(e) => setSchoolForm(prev => ({ ...prev, schoolCode: e.target.value.toUpperCase() }))}
+                                                className="bg-zinc-900/30 border-zinc-800 text-eduGreen-500 h-14 rounded-2xl border-2 font-mono tracking-[0.2em] font-black focus:border-eduGreen-600 transition-all"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="p-8 bg-zinc-900/30 border border-zinc-800 rounded-[2rem] space-y-6">
+                                        <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Digital Footprint</h4>
+                                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+                                            <div className="p-6 bg-zinc-950/50 rounded-2xl border border-zinc-900 text-center">
+                                                <div className="text-2xl font-black text-white">{schoolData?._count?.students || 0}</div>
+                                                <div className="text-[8px] font-black text-zinc-700 uppercase tracking-widest">Active Learners</div>
+                                            </div>
+                                            <div className="p-6 bg-zinc-950/50 rounded-2xl border border-zinc-900 text-center">
+                                                <div className="text-2xl font-black text-white">{schoolData?._count?.users || 0}</div>
+                                                <div className="text-[8px] font-black text-zinc-700 uppercase tracking-widest">Authorized Staff</div>
+                                            </div>
+                                            <div className="p-6 bg-zinc-950/50 rounded-2xl border border-zinc-900 text-center">
+                                                <div className="text-2xl font-black text-white">{schoolData?._count?.grades || 0}</div>
+                                                <div className="text-[8px] font-black text-zinc-700 uppercase tracking-widest">Grade Tiers</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="bg-zinc-950/10 border border-zinc-900 rounded-[2.5rem] p-8 border-dashed">
+                                <div className="flex flex-col items-center justify-center py-10 text-center">
+                                    <div className="w-16 h-16 rounded-2xl bg-zinc-900/50 border border-zinc-800 flex items-center justify-center mb-6">
+                                        <Zap className="w-8 h-8 text-zinc-800" />
+                                    </div>
+                                    <h4 className="text-sm font-black text-zinc-500 uppercase tracking-widest">Advanced Logo Engine</h4>
+                                    <p className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest mt-2">Vectorized organizational branding coming in Phase 9</p>
+                                    <Button variant="ghost" disabled className="mt-6 opacity-30 text-[9px] font-black uppercase tracking-widest border border-zinc-900 rounded-xl h-10">Upload Vector Map</Button>
+                                </div>
+                            </Card>
+                        </div>
                     )}
                 </div>
             </div>

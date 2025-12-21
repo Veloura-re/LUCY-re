@@ -48,6 +48,16 @@ export async function GET(request: Request, { params }: { params: { studentId: s
             orderBy: { createdAt: 'desc' }
         });
 
+        // Fetch Internal Notes (Confidential - Staff Only)
+        let internalNotes: any[] = [];
+        if (['SUPERADMIN', 'PRINCIPAL', 'TEACHER'].includes(user.role)) {
+            internalNotes = await prisma.internalNote.findMany({
+                where: { studentId },
+                include: { author: true },
+                orderBy: { createdAt: 'desc' }
+            });
+        }
+
         return NextResponse.json({
             student,
             grades,
@@ -57,7 +67,8 @@ export async function GET(request: Request, { params }: { params: { studentId: s
                 late: attendance.filter(a => a.status === 'LATE').length,
                 absent: attendance.filter(a => a.status === 'ABSENT').length
             },
-            remarks
+            remarks,
+            internalNotes
         });
 
     } catch (e) {
