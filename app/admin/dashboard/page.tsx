@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Plus, School, Users, GraduationCap, Copy, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { ConfirmationModal, AlertModal } from "@/components/ui/confirmation-modal";
 
 interface School {
     id: string;
@@ -29,6 +30,10 @@ export default function SuperAdminDashboard() {
     const [inviteUrl, setInviteUrl] = useState<string | null>(null);
     const [inviteToken, setInviteToken] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
+
+    // Modal State
+    const [confirmAction, setConfirmAction] = useState<{ type: 'SUSPEND' | 'DELETE' | null, schoolId: string, schoolName: string }>({ type: null, schoolId: "", schoolName: "" });
+    const [alertConfig, setAlertConfig] = useState<{ title: string, message: string, isOpen: boolean, variant?: "info" | "success" | "error" }>({ title: "", message: "", isOpen: false, variant: "info" });
 
     useEffect(() => {
         fetchSchools();
@@ -86,11 +91,17 @@ export default function SuperAdminDashboard() {
         }
     };
 
-    const handleSuspendSchool = async (schoolId: string) => {
-        if (!confirm('Are you sure you want to suspend this school? Staff and students will lose access.')) return;
+    const handleSuspendSchool = (schoolId: string) => {
+        const school = schools.find(s => s.id === schoolId);
+        setConfirmAction({ type: 'SUSPEND', schoolId, schoolName: school?.name || "Institution" });
+    };
+
+    const executeSuspend = async () => {
+        if (!confirmAction.schoolId) return;
+        setIsLoading(true);
 
         try {
-            const res = await fetch(`/api/admin/schools/${schoolId}`, {
+            const res = await fetch(`/api/admin/schools/${confirmAction.schoolId}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: 'SUSPENDED' }),
@@ -100,7 +111,10 @@ export default function SuperAdminDashboard() {
 
             fetchSchools(); // Refresh list
         } catch (err: any) {
-            alert('Error: ' + err.message);
+            setAlertConfig({ title: "Infrastructure Failure", message: err.message, isOpen: true, variant: "error" });
+        } finally {
+            setConfirmAction({ type: null, schoolId: "", schoolName: "" });
+            setIsLoading(false);
         }
     };
 
@@ -112,19 +126,28 @@ export default function SuperAdminDashboard() {
                 body: JSON.stringify({ status: 'ACTIVE' }),
             });
 
-            if (!res.ok) throw new Error('Failed to activate school');
-
+            if (!res.ok) throw new Error('Institutional reactivation sequence failed');
             fetchSchools(); // Refresh list
         } catch (err: any) {
-            alert('Error: ' + err.message);
+            setAlertConfig({
+                title: 'Authorization Fault',
+                message: err.message,
+                isOpen: true,
+                variant: 'error'
+            });
         }
     };
 
-    const handleDeleteSchool = async (schoolId: string, schoolName: string) => {
-        if (!confirm(`⚠️ WARNING: Are you sure you want to DELETE "${schoolName}"?\n\nThis will permanently remove:\n- All students\n- All staff\n- All classes\n- All grades\n- All data\n\nThis action CANNOT be undone!`)) return;
+    const handleDeleteSchool = (schoolId: string, schoolName: string) => {
+        setConfirmAction({ type: 'DELETE', schoolId, schoolName });
+    };
+
+    const executeDelete = async () => {
+        if (!confirmAction.schoolId) return;
+        setIsLoading(true);
 
         try {
-            const res = await fetch(`/api/admin/schools/${schoolId}`, {
+            const res = await fetch(`/api/admin/schools/${confirmAction.schoolId}`, {
                 method: 'DELETE',
             });
 
@@ -132,7 +155,10 @@ export default function SuperAdminDashboard() {
 
             fetchSchools(); // Refresh list
         } catch (err: any) {
-            alert('Error: ' + err.message);
+            setAlertConfig({ title: "Termination Failed", message: err.message, isOpen: true, variant: "error" });
+        } finally {
+            setConfirmAction({ type: null, schoolId: "", schoolName: "" });
+            setIsLoading(false);
         }
     };
 
@@ -396,6 +422,28 @@ export default function SuperAdminDashboard() {
                     </Card>
                 </div>
             </div>
+
+            <ConfirmationModal
+                isOpen={confirmAction.type !== null}
+                onClose={() => setConfirmAction({ type: null, schoolId: "", schoolName: "" })}
+                onConfirm={confirmAction.type === 'DELETE' ? executeDelete : executeSuspend}
+                isLoading={isLoading}
+                title={confirmAction.type === 'DELETE' ? "Permanent Institutional Purge" : "Ecosystem Suspension"}
+                description={confirmAction.type === 'DELETE'
+                    ? `⚠️ CRITICAL: You are about to PERMANENTLY expunge "${confirmAction.schoolName}". This will irrecoverably delete all students, staff, classes, and academic records. Proceed with extreme caution.`
+                    : `Suspend access for "${confirmAction.schoolName}". All active sessions will be terminated and institution nodes will go offline.`
+                }
+                confirmText={confirmAction.type === 'DELETE' ? "Expunge Everything" : "Suspend Access"}
+                variant={confirmAction.type === 'DELETE' ? "danger" : "warning"}
+            />
+
+            <AlertModal
+                isOpen={alertConfig.isOpen}
+                onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                variant={alertConfig.variant}
+            />
         </div>
     );
 }

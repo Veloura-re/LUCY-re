@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
 import { format } from "date-fns";
 import { SpringingLoader } from "@/components/dashboard/springing-loader";
+import { AlertModal } from "@/components/ui/confirmation-modal";
 
 function MessagesContent() {
     const supabase = createClient();
@@ -27,6 +28,7 @@ function MessagesContent() {
     const [isUploading, setIsUploading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [alertConfig, setAlertConfig] = useState<{ title: string, message: string, isOpen: boolean, variant?: "info" | "success" | "error" }>({ title: "", message: "", isOpen: false, variant: "info" });
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -208,7 +210,12 @@ function MessagesContent() {
 
             if (!res.ok) {
                 setMessages(prev => prev.filter(m => m.id !== tempId));
-                alert("Failed to send");
+                setAlertConfig({
+                    title: "Transmission Error",
+                    message: "The neural signal could not be successfully relayed to the target node.",
+                    isOpen: true,
+                    variant: "error"
+                });
             } else {
                 // Remove temp message after successful post to avoid double display 
                 // when the realtime message arrives (realtime will handle the display)
@@ -219,7 +226,12 @@ function MessagesContent() {
             }
         } catch (e) {
             setMessages(prev => prev.filter(m => m.id !== tempId));
-            alert("Failed to send");
+            setAlertConfig({
+                title: "Core Link Down",
+                message: "A critical failure occurred during neural data transmission.",
+                isOpen: true,
+                variant: "error"
+            });
         }
     };
 
@@ -245,10 +257,20 @@ function MessagesContent() {
                     name: data.name
                 });
             } else {
-                alert("Upload failed: " + (data.error || "Unknown error"));
+                setAlertConfig({
+                    title: "Buffer Overflow",
+                    message: data.error || "The institutional storage node rejected the binary transmission.",
+                    isOpen: true,
+                    variant: "error"
+                });
             }
         } catch (e) {
-            alert("Upload failed");
+            setAlertConfig({
+                title: "Encryption Protocol Fault",
+                message: "Binary data could not be securely encapsulated for transmission.",
+                isOpen: true,
+                variant: "error"
+            });
         } finally {
             setIsUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
@@ -309,7 +331,12 @@ function MessagesContent() {
                 await fetchRooms();
                 setActiveRoom(data.room);
             } else {
-                alert(data.error || "Could not start chat");
+                setAlertConfig({
+                    title: "Link Authorization Denied",
+                    message: data.error || "The target node is not accepting new neural connections.",
+                    isOpen: true,
+                    variant: "error"
+                });
             }
         } catch (e) {
             console.error(e);
@@ -692,6 +719,14 @@ function MessagesContent() {
                     )}
                 </div>
             </Card>
+
+            <AlertModal
+                isOpen={alertConfig.isOpen}
+                onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                variant={alertConfig.variant}
+            />
         </div>
     );
 }

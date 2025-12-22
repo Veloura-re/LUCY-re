@@ -108,6 +108,38 @@ export function TeacherView({ user }: { user: any }) {
                         </div>
                     ) : (
                         <div className="grid md:grid-cols-2 gap-8">
+                            {user.role === 'HOMEROOM' && (
+                                <Card className="group relative bg-eduGreen-600 border-eduGreen-500 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-eduGreen-900/40 border-t-white/10">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50" />
+
+                                    <CardHeader className="p-8 pb-4 relative z-10">
+                                        <div className="flex items-start justify-between gap-4 mb-4">
+                                            <div className="px-3 py-1.5 rounded-xl bg-white/20 border border-white/30 text-[9px] font-black text-white uppercase tracking-widest">
+                                                Active Authority
+                                            </div>
+                                            <div className="p-3 bg-white/10 rounded-2xl border border-white/20 shadow-xl">
+                                                <Users className="w-5 h-5 text-white" />
+                                            </div>
+                                        </div>
+                                        <CardTitle className="text-3xl font-black text-white tracking-tight leading-tight">Homeroom Command</CardTitle>
+                                        <p className="text-eduGreen-100 font-bold text-xs mt-2 uppercase tracking-widest">Register & Presence Console</p>
+                                    </CardHeader>
+
+                                    <CardContent className="p-8 pt-4 relative z-10">
+                                        <p className="text-white/80 text-[10px] font-bold leading-relaxed uppercase">
+                                            Execute daily attendance protocols and manage institutional presence for your assigned cohort.
+                                        </p>
+                                    </CardContent>
+
+                                    <CardFooter className="p-8 pt-0 relative z-10">
+                                        <Link href="/dashboard/homeroom" className="w-full">
+                                            <Button className="w-full h-14 bg-white hover:bg-zinc-100 text-eduGreen-700 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all group/btn">
+                                                Launch Console <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                                            </Button>
+                                        </Link>
+                                    </CardFooter>
+                                </Card>
+                            )}
                             {classes.map((cls) => (
                                 <Card key={cls.id} className="group relative bg-zinc-950/50 backdrop-blur-2xl border-zinc-900 rounded-[2.5rem] overflow-hidden hover:border-eduGreen-900/40 transition-all border-t-zinc-800/20 shadow-2xl">
                                     <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-eduGreen-600 via-emerald-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />

@@ -55,9 +55,12 @@ export default async function DashboardLayout({
     }
 
     if (!dbUser) {
-        // Instead of a plain redirect which triggers a loop if middleware sees 'user' but not 'dbUser',
-        // we redirect with a specific flag or just handle the error here.
         redirect("/login?error=profile_not_found");
+    }
+
+    // Enforce School Suspension (Skip for SuperAdmins)
+    if (dbUser.role !== 'SUPERADMIN' && dbUser.school?.status === 'SUSPENDED') {
+        redirect("/school-suspended");
     }
 
     const role = dbUser.role;
@@ -70,6 +73,7 @@ export default async function DashboardLayout({
             { icon: GraduationCap, label: "Students", href: "/dashboard/students" },
             { icon: BookOpen, label: "Classes", href: "/dashboard/classes" },
             { icon: Users, label: "Staffing", href: "/dashboard/staffing" },
+            { icon: Users, label: "Parents", href: "/dashboard/parents" },
             { icon: Calendar, label: "Timetable", href: "/dashboard/timetable" },
             { icon: Users, label: "Attendance", href: "/dashboard/attendance/settings" },
             { icon: BarChart3, label: "Reports", href: "/dashboard/reports" },
@@ -79,6 +83,7 @@ export default async function DashboardLayout({
         ],
         TEACHER: [
             { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
+            { icon: Users, label: "Parents", href: "/dashboard/parents" },
             { icon: Calendar, label: "Schedule", href: "/dashboard/teacher/schedule" },
             { icon: Users, label: "Attendance", href: "/dashboard/teacher/attendance" },
             { icon: GraduationCap, label: "Grades", href: "/dashboard/teacher/exams" },
@@ -87,6 +92,7 @@ export default async function DashboardLayout({
         ],
         HOMEROOM: [
             { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
+            { icon: Users, label: "Parents", href: "/dashboard/parents" },
             { icon: Users, label: "My Homeroom", href: "/dashboard/homeroom" },
             { icon: BookOpen, label: "My Classes", href: "/dashboard/classes" },
             { icon: MessageSquare, label: "Messages", href: "/dashboard/messages" },

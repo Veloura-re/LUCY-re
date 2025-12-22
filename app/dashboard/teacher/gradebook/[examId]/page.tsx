@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertModal } from "@/components/ui/confirmation-modal";
 
 export default function GradebookPage() {
     const params = useParams();
@@ -25,6 +26,7 @@ export default function GradebookPage() {
     const [statuses, setStatuses] = useState<{ [studentId: string]: string }>({});
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [alertConfig, setAlertConfig] = useState<{ title: string, message: string, isOpen: boolean, variant?: "info" | "success" | "error" }>({ title: "", message: "", isOpen: false, variant: "info" });
 
     useEffect(() => {
         if (examId) fetchData();
@@ -107,11 +109,21 @@ export default function GradebookPage() {
                     attendance: attendanceToSubmit
                 })
             });
-            alert("Record finalized and saved.");
+            setAlertConfig({
+                title: "Academic Data Archived",
+                message: "Institutional performance records have been successfully encrypted and finalized.",
+                isOpen: true,
+                variant: "success"
+            });
             fetchData(); // Refresh
         } catch (e) {
             console.error(e);
-            alert("Failed to save.");
+            setAlertConfig({
+                title: "Data Integrity Fault",
+                message: "The synchronization sequence for performance records was interrupted.",
+                isOpen: true,
+                variant: "error"
+            });
         } finally {
             setSaving(false);
         }
@@ -139,8 +151,8 @@ export default function GradebookPage() {
                 </div>
                 {!isLocked && (
                     <div className="ml-auto">
-                        <Button onClick={handleSave} disabled={saving} className="bg-eduGreen-600 hover:bg-eduGreen-500 text-white gap-2 h-11 px-6 rounded-xl font-bold transition-all shadow-lg shadow-eduGreen-900/20 active:scale-95">
-                            {saving ? "Processing..." : <><Save className="w-4 h-4" /> Finalize Marks</>}
+                        <Button onClick={handleSave} isLoading={saving} className="bg-eduGreen-600 hover:bg-eduGreen-500 text-white gap-2 h-11 px-6 rounded-xl font-bold transition-all shadow-lg shadow-eduGreen-900/20 active:scale-95">
+                            <Save className="w-4 h-4" /> Finalize Marks
                         </Button>
                     </div>
                 )}
@@ -263,6 +275,14 @@ export default function GradebookPage() {
                     </p>
                 </div>
             </div>
+
+            <AlertModal
+                isOpen={alertConfig.isOpen}
+                onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                variant={alertConfig.variant}
+            />
         </div>
     );
 }

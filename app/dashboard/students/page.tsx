@@ -9,6 +9,7 @@ import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createClient } from "@/utils/supabase/client";
 import { SpringingLoader } from "@/components/dashboard/springing-loader";
+import { AlertModal } from "@/components/ui/confirmation-modal";
 
 export default function StudentsPage() {
     const [isAdding, setIsAdding] = useState(false);
@@ -18,6 +19,7 @@ export default function StudentsPage() {
     const [filteredClasses, setFilteredClasses] = useState<any[]>([]);
     const [me, setMe] = useState<any>(null);
     const [fetching, setFetching] = useState(true);
+    const [showAlert, setShowAlert] = useState(false);
     const supabase = createClient();
 
     useEffect(() => {
@@ -68,7 +70,7 @@ export default function StudentsPage() {
                 body: JSON.stringify(newStudent)
             });
             if (res.ok) {
-                alert("Student added successfully");
+                setShowAlert(true);
                 setIsAdding(false);
                 setNewStudent({ firstName: "", lastName: "", grade: "", classId: "", email: "" });
                 fetchStudents();
@@ -280,6 +282,14 @@ export default function StudentsPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            <AlertModal
+                isOpen={showAlert}
+                onClose={() => setShowAlert(false)}
+                title="Personnel Registered"
+                message="The student has been successfully enrolled and indexed within the institutional body."
+                variant="success"
+            />
         </div>
     );
 }

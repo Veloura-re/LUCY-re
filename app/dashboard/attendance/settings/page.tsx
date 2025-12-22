@@ -81,11 +81,10 @@ export default function AttendanceSettingsPage() {
 
                 <Button
                     onClick={handleSave}
-                    disabled={saving}
+                    isLoading={saving}
                     className="bg-eduGreen-600 hover:bg-eduGreen-500 text-white h-14 px-10 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-eduGreen-900/20 transition-all active:scale-95 mb-1"
                 >
-                    {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : success ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
-                    {saving ? "Syncing..." : success ? "Protocols Saved" : "Commit Changes"}
+                    {success ? <><CheckCircle2 className="w-4 h-4 mr-2" /> Protocols Saved</> : <><Sparkles className="w-4 h-4 mr-2" /> Commit Changes</>}
                 </Button>
             </div>
 

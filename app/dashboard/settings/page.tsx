@@ -10,6 +10,7 @@ import { User, Shield, Bell, Zap, LogOut, Loader2 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { SpringingLoader } from "@/components/dashboard/springing-loader";
+import { AlertModal } from "@/components/ui/confirmation-modal";
 
 export default function SettingsPage() {
     const router = useRouter();
@@ -43,6 +44,7 @@ export default function SettingsPage() {
         new: "",
         confirm: ""
     });
+    const [alertConfig, setAlertConfig] = useState<{ title: string, message: string, isOpen: boolean, variant?: "info" | "success" | "error" }>({ title: "", message: "", isOpen: false, variant: "info" });
 
     useEffect(() => {
         fetchSettings();
@@ -124,7 +126,12 @@ export default function SettingsPage() {
             });
         } catch (e) {
             console.error(e);
-            alert("Upload failed. Verify storage bucket permissions.");
+            setAlertConfig({
+                title: "Upload Failed",
+                message: "Verify storage bucket permissions for brand asset deployment.",
+                isOpen: true,
+                variant: "error"
+            });
         } finally {
             setSaving(false);
         }
@@ -163,7 +170,12 @@ export default function SettingsPage() {
     const handlePasswordUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
         if (passwordData.new !== passwordData.confirm) {
-            alert("New passwords do not match.");
+            setAlertConfig({
+                title: "Hash Mismatch",
+                message: "New security hashes do not match the institutional protocol.",
+                isOpen: true,
+                variant: "error"
+            });
             return;
         }
         setSaving(true);
@@ -175,10 +187,20 @@ export default function SettingsPage() {
             });
             const data = await res.json();
             if (res.ok) {
-                alert("Security protocols updated successfully.");
+                setAlertConfig({
+                    title: "Security Updated",
+                    message: "Institutional security protocols have been successfully synchronized.",
+                    isOpen: true,
+                    variant: "success"
+                });
                 setPasswordData({ current: "", new: "", confirm: "" });
             } else {
-                alert(data.error || "Uplink failed.");
+                setAlertConfig({
+                    title: "Uplink Failed",
+                    message: data.error || "Communication with the identity server was interrupted.",
+                    isOpen: true,
+                    variant: "error"
+                });
             }
         } catch (e) {
             console.error(e);
@@ -490,6 +512,14 @@ export default function SettingsPage() {
                     )}
                 </div>
             </div>
+
+            <AlertModal
+                isOpen={alertConfig.isOpen}
+                onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                variant={alertConfig.variant}
+            />
         </div>
     );
 }

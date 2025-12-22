@@ -60,6 +60,75 @@ export async function syncGroupMemberships(userId: string, schoolId: string, rol
             create: { chatRoomId: facultyRoom.id, userId }
         });
     }
+
+    // 3. Ensure Class-Specific Groups
+    let classIds: string[] = [];
+
+    if (role === Role.TEACHER || role === Role.HOMEROOM) {
+        const assignments = await prisma.teacherAssignment.findMany({
+            where: { teacherId: userId },
+            select: { classId: true }
+        });
+        classIds = assignments.map(a => a.classId);
+    } else if (role === Role.STUDENT) {
+        const student = await prisma.student.findUnique({
+            where: { userId },
+            select: { classId: true }
+        });
+        if (student?.classId) classIds = [student.classId];
+    } else if (role === Role.PARENT) {
+        const parentLinks = await prisma.parentStudentLink.findMany({
+            where: { parentId: userId },
+            include: { student: { select: { classId: true } } }
+        });
+        classIds = parentLinks
+            .map(l => l.student.classId)
+            .filter((id): id is string => !!id);
+    }
+
+    // Process each class chat
+    for (const classId of [...new Set(classIds)]) {
+        const schoolClass = await prisma.class.findUnique({
+            where: { id: classId },
+            include: { grade: true }
+        });
+
+        if (!schoolClass) continue;
+
+        const chatName = `Class: ${schoolClass.grade.name} ${schoolClass.name}`;
+
+        let classRoom = await prisma.chatRoom.findFirst({
+            where: {
+                schoolId,
+                type: ChatRoomType.GROUP,
+                metadata: {
+                    path: ['classId'],
+                    equals: classId
+                }
+            }
+        });
+
+        if (!classRoom) {
+            classRoom = await prisma.chatRoom.create({
+                data: {
+                    schoolId,
+                    type: ChatRoomType.GROUP,
+                    name: chatName,
+                    metadata: {
+                        classId,
+                        description: `Official group for ${chatName}`
+                    }
+                }
+            });
+        }
+
+        // Sync Membership
+        await prisma.chatRoomMember.upsert({
+            where: { chatRoomId_userId: { chatRoomId: classRoom.id, userId } },
+            update: {},
+            create: { chatRoomId: classRoom.id, userId }
+        });
+    }
 }
 
 /**

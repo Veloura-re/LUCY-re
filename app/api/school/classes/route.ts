@@ -42,8 +42,46 @@ export async function PATCH(request: Request) {
     const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
     if (!dbUser?.schoolId) return NextResponse.json({ error: 'No school linked' }, { status: 400 });
 
+    if (!['PRINCIPAL', 'SUPERADMIN'].includes(dbUser.role)) {
+        return NextResponse.json({ error: 'Unauthorized role' }, { status: 403 });
+    }
+
     try {
         const { classId, homeroomTeacherId } = await request.json();
+
+        // Ensure the class belongs to this school
+        const targetClass = await prisma.class.findUnique({
+            where: { id: classId },
+            include: { grade: true }
+        });
+
+        if (!targetClass || targetClass.grade.schoolId !== dbUser.schoolId) {
+            return NextResponse.json({ error: 'Class not found' }, { status: 404 });
+        }
+
+        // Ensure the teacher exists and belongs to this school
+        if (homeroomTeacherId) {
+            const targetTeacher = await prisma.user.findUnique({
+                where: { id: homeroomTeacherId }
+            });
+
+            if (!targetTeacher || targetTeacher.schoolId !== dbUser.schoolId) {
+                return NextResponse.json({ error: 'Teacher not found' }, { status: 404 });
+            }
+
+            // Check if teacher is already assigned to ANOTHER class
+            const existingAssignment = await prisma.class.findFirst({
+                where: {
+                    homeroomTeacherId,
+                    id: { not: classId },
+                    grade: { schoolId: dbUser.schoolId }
+                }
+            });
+
+            if (existingAssignment) {
+                return NextResponse.json({ error: 'Teacher is already assigned to another class' }, { status: 400 });
+            }
+        }
 
         const updatedClass = await prisma.class.update({
             where: { id: classId },
@@ -59,22 +97,22 @@ export async function PATCH(request: Request) {
             });
         }
 
-        // 2. Cleanup: Any user with HOMEROOM role who is NOT a homeroom teacher for any class anymore
-        // should be reverted to TEACHER.
-        const homeroomUsers = await prisma.user.findMany({
-            where: { role: 'HOMEROOM', schoolId: dbUser.schoolId },
-            include: { homeroomClasses: true } // Assuming we add this relation to User, or we can check Class table
-        });
-
-        // Actually, let's just do a clean check against the Class table for efficiency
+        // 2. Cleanup: Any user with HOMEROOM role in this school who is NOT a homeroom teacher anymore
         const activeHomeroomTeachers = await prisma.class.findMany({
-            where: { NOT: { homeroomTeacherId: null } },
+            where: {
+                NOT: { homeroomTeacherId: null },
+                grade: { schoolId: dbUser.schoolId }
+            },
             select: { homeroomTeacherId: true }
         });
-        const activeIds = new Set(activeHomeroomTeachers.map(c => c.homeroomTeacherId));
+        const activeIds = new Set(activeHomeroomTeachers.map(c => (c.homeroomTeacherId as string)));
 
         const teachersToRevert = await prisma.user.findMany({
-            where: { role: 'HOMEROOM', id: { notIn: Array.from(activeIds) as string[] } }
+            where: {
+                role: 'HOMEROOM',
+                schoolId: dbUser.schoolId,
+                id: { notIn: Array.from(activeIds) }
+            }
         });
 
         for (const teacher of teachersToRevert) {
@@ -86,7 +124,7 @@ export async function PATCH(request: Request) {
 
         return NextResponse.json({ success: true, class: updatedClass });
     } catch (e) {
-        console.error(e);
+        console.error("Error updating class:", e);
         return NextResponse.json({ error: 'Failed to update class' }, { status: 500 });
     }
 }

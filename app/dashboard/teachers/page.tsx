@@ -14,6 +14,7 @@ import Link from "next/link";
 
 import { createClient } from "@/utils/supabase/client";
 import { SpringingLoader } from "@/components/dashboard/springing-loader";
+import { ConfirmationModal, AlertModal } from "@/components/ui/confirmation-modal";
 
 export default function TeachersPage() {
     const [teachers, setTeachers] = useState<any[]>([]);
@@ -25,6 +26,10 @@ export default function TeachersPage() {
     const [fetching, setFetching] = useState(true);
     const [copied, setCopied] = useState(false);
     const [me, setMe] = useState<any>(null);
+
+    // Modal State
+    const [confirmDeleteEmail, setConfirmDeleteEmail] = useState<string | null>(null);
+    const [alertConfig, setAlertConfig] = useState<{ title: string, message: string, isOpen: boolean, variant?: "info" | "success" | "error" }>({ title: "", message: "", isOpen: false, variant: "info" });
 
     const supabase = createClient();
 
@@ -82,22 +87,35 @@ export default function TeachersPage() {
         }
     };
 
-    const handleDelete = async (email: string) => {
-        if (!confirm("Are you sure you want to remove this teacher or revoke their invite?")) return;
+    const handleDelete = (email: string) => {
+        setConfirmDeleteEmail(email);
+    };
+
+    const executeDelete = async () => {
+        if (!confirmDeleteEmail) return;
+        setIsLoading(true);
 
         try {
             const res = await fetch('/api/school/teachers/delete', {
                 method: 'DELETE',
-                body: JSON.stringify({ email })
+                body: JSON.stringify({ email: confirmDeleteEmail })
             });
 
             if (res.ok) {
                 fetchTeachers();
             } else {
-                alert("Failed to delete.");
+                setAlertConfig({
+                    title: "Access Revocation Failed",
+                    message: "Tactical override failed. The personnel record remains locked by synchronized data streams.",
+                    isOpen: true,
+                    variant: "error"
+                });
             }
         } catch (e) {
             console.error(e);
+        } finally {
+            setConfirmDeleteEmail(null);
+            setIsLoading(false);
         }
     };
 
@@ -281,7 +299,12 @@ export default function TeachersPage() {
                                                     onClick={() => {
                                                         const link = `${window.location.origin}/invite/${teacher.token}`;
                                                         navigator.clipboard.writeText(link);
-                                                        alert("Invite link copied to clipboard");
+                                                        setAlertConfig({
+                                                            title: "Uplink Secure",
+                                                            message: "Faculty access credentials successfully replicated to local clipboard buffer.",
+                                                            isOpen: true,
+                                                            variant: "success"
+                                                        });
                                                     }}
                                                     className="h-8 px-3 rounded-xl bg-zinc-950 border border-zinc-900 text-[8px] font-black uppercase tracking-widest text-zinc-600 hover:text-white transition-all"
                                                 >
@@ -315,6 +338,25 @@ export default function TeachersPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            <ConfirmationModal
+                isOpen={!!confirmDeleteEmail}
+                onClose={() => setConfirmDeleteEmail(null)}
+                onConfirm={executeDelete}
+                isLoading={isLoading}
+                title="Personnel Offboarding"
+                description={`Are you sure you want to revoke system access for ${confirmDeleteEmail}? This will terminate their active session and archive their departmental clearance.`}
+                confirmText="Terminate Access"
+                variant="danger"
+            />
+
+            <AlertModal
+                isOpen={alertConfig.isOpen}
+                onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                variant={alertConfig.variant}
+            />
         </div>
     );
 }

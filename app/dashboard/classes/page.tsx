@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Plus, BookOpen, Layers, ChevronRight, ChevronDown, School, Trash2, Check, MessageSquare } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SpringingLoader } from "@/components/dashboard/springing-loader";
+import { ConfirmationModal, AlertModal } from "@/components/ui/confirmation-modal";
 
 export default function ClassesPage() {
     const [grades, setGrades] = useState<any[]>([]);
@@ -25,6 +26,10 @@ export default function ClassesPage() {
     const [newSubjectName, setNewSubjectName] = useState("");
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
+
+    // Modal State
+    const [deleteConfig, setDeleteConfig] = useState<{ id: string, type: 'CLASS' | 'SUBJECT' | null }>({ id: "", type: null });
+    const [alertConfig, setAlertConfig] = useState<{ title: string, message: string, isOpen: boolean }>({ title: "", message: "", isOpen: false });
 
     useEffect(() => {
         const init = async () => {
@@ -119,29 +124,43 @@ export default function ClassesPage() {
         }
     };
 
-    const handleDeleteClass = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this class?")) return;
-        try {
-            const res = await fetch('/api/school/classes', {
-                method: 'DELETE',
-                body: JSON.stringify({ id, type: 'CLASS' })
-            });
-            if (res.ok) fetchData();
-        } catch (e) {
-            console.error(e);
-        }
+    const handleDeleteClass = (id: string) => {
+        setDeleteConfig({ id, type: 'CLASS' });
     };
 
-    const handleDeleteSubject = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this subject?")) return;
+    const handleDeleteSubject = (id: string) => {
+        setDeleteConfig({ id, type: 'SUBJECT' });
+    };
+
+    const executeDelete = async () => {
+        setLoading(true);
         try {
-            const res = await fetch('/api/school/subjects', {
-                method: 'DELETE',
-                body: JSON.stringify({ id })
-            });
-            if (res.ok) fetchSubjects();
+            if (deleteConfig.type === 'CLASS') {
+                const res = await fetch('/api/school/classes', {
+                    method: 'DELETE',
+                    body: JSON.stringify({ id: deleteConfig.id, type: 'CLASS' })
+                });
+                if (res.ok) {
+                    fetchData();
+                } else {
+                    setAlertConfig({ title: "Operation Failed", message: "Institutional access prevented class decommissioning.", isOpen: true });
+                }
+            } else if (deleteConfig.type === 'SUBJECT') {
+                const res = await fetch('/api/school/subjects', {
+                    method: 'DELETE',
+                    body: JSON.stringify({ id: deleteConfig.id })
+                });
+                if (res.ok) {
+                    fetchSubjects();
+                } else {
+                    setAlertConfig({ title: "Access Denied", message: "Core discipline is locked by synchronized academic records.", isOpen: true });
+                }
+            }
         } catch (e) {
             console.error(e);
+        } finally {
+            setDeleteConfig({ id: "", type: null });
+            setLoading(false);
         }
     };
 
@@ -403,6 +422,28 @@ export default function ClassesPage() {
                     </Card>
                 </div>
             </div>
+
+            <ConfirmationModal
+                isOpen={deleteConfig.type !== null}
+                onClose={() => setDeleteConfig({ id: "", type: null })}
+                onConfirm={executeDelete}
+                isLoading={loading}
+                title={deleteConfig.type === 'CLASS' ? "Decommission Cohort" : "Expunge Discipline"}
+                description={deleteConfig.type === 'CLASS'
+                    ? "Are you sure you want to decommission this class? All associated student assignments and local logs will be archived."
+                    : "Executing this action will remove the subject from the institutional registry. Synchronized records may be affected."
+                }
+                confirmText="Expunge"
+                variant="danger"
+            />
+
+            <AlertModal
+                isOpen={alertConfig.isOpen}
+                onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                variant="error"
+            />
         </div>
     );
 }

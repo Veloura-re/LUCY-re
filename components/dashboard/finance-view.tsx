@@ -21,6 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import { SpringingLoader } from "@/components/dashboard/springing-loader";
 import { toast } from "sonner";
+import { ConfirmationModal, InputModal } from "@/components/ui/confirmation-modal";
 
 interface FinanceViewProps {
     user: any;
@@ -33,6 +34,8 @@ export function FinanceView({ user, school, grades }: FinanceViewProps) {
     const [loading, setLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [showInvoiceModal, setShowInvoiceModal] = useState(false);
 
     // Form state
     const [formData, setFormData] = useState({
@@ -83,22 +86,26 @@ export function FinanceView({ user, school, grades }: FinanceViewProps) {
         }
     };
 
-    const handleDeleteFee = async (id: string) => {
-        if (!confirm("Decommission this fee structure?")) return;
+    const handleDeleteFee = (id: string) => {
+        setDeleteId(id);
+    };
+
+    const executeDeleteFee = async () => {
+        if (!deleteId) return;
         try {
-            const res = await fetch(`/api/school/finance/fees/${id}`, { method: 'DELETE' });
+            const res = await fetch(`/api/school/finance/fees/${deleteId}`, { method: 'DELETE' });
             if (!res.ok) throw new Error("Failed to delete");
             toast.success("Structure decommissioned");
             fetchFees();
         } catch (e) {
             toast.error("Failed to delete fee structure");
+        } finally {
+            setDeleteId(null);
         }
     };
 
-    const handleGenerateInvoices = async () => {
-        const dueDate = prompt("Enter Due Date (YYYY-MM-DD):", "2024-01-31");
-        if (!dueDate) return;
-
+    const handleGenerateInvoices = async (dueDate: string) => {
+        setShowInvoiceModal(false);
         setIsGenerating(true);
         try {
             const res = await fetch('/api/school/finance/invoices/generate', {
@@ -136,7 +143,7 @@ export function FinanceView({ user, school, grades }: FinanceViewProps) {
                 <div className="flex items-center gap-4 mb-1">
                     <Button
                         variant="ghost"
-                        onClick={handleGenerateInvoices}
+                        onClick={() => setShowInvoiceModal(true)}
                         disabled={isGenerating}
                         className="rounded-2xl border border-zinc-900 bg-zinc-950/50 hover:border-eduGreen-500/30 transition-all h-14 px-6 font-black text-[10px] uppercase tracking-widest text-zinc-500 hover:text-white"
                     >
@@ -315,6 +322,28 @@ export function FinanceView({ user, school, grades }: FinanceViewProps) {
                     </div>
                 )}
             </div>
+
+            <ConfirmationModal
+                isOpen={!!deleteId}
+                onClose={() => setDeleteId(null)}
+                onConfirm={executeDeleteFee}
+                title="Decommission Structure"
+                description="This action will permanently remove this fee structure from the institutional ledger. All associated billing records will be archived."
+                confirmText="Decommission"
+                variant="danger"
+            />
+
+            <InputModal
+                isOpen={showInvoiceModal}
+                onClose={() => setShowInvoiceModal(false)}
+                onConfirm={handleGenerateInvoices}
+                title="Launch Invoicing Cycle"
+                description="Specify the financial period deadline for generated invoices."
+                placeholder="YYYY-MM-DD"
+                defaultValue="2024-01-31"
+                inputType="date"
+                confirmText="Execute Cycle"
+            />
         </div>
     );
 }

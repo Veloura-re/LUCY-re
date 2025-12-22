@@ -57,6 +57,7 @@ export default async function DashboardPage() {
     switch (dbUser.role) {
         case 'PRINCIPAL':
             return <DirectorView user={dbUser} school={dbUser.school} />;
+        case 'HOMEROOM':
         case 'TEACHER':
             return <TeacherView user={dbUser} />;
         case 'PARENT':

@@ -11,6 +11,7 @@ import {
     Trash2, AlertTriangle, CheckCircle2, MoreHorizontal
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AlertModal } from "@/components/ui/confirmation-modal";
 
 const DAYS = [
     { label: "Monday", value: "MON" },
@@ -29,7 +30,9 @@ export default function TimetableManagementPage() {
     const [selectedClassId, setSelectedClassId] = useState("");
     const [timetableEntries, setTimetableEntries] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState("builder");
+    const [alertConfig, setAlertConfig] = useState<{ title: string, message: string, isOpen: boolean, variant?: "info" | "success" | "error" }>({ title: "", message: "", isOpen: false, variant: "info" });
 
     useEffect(() => {
         fetchInitialData();
@@ -114,6 +117,7 @@ export default function TimetableManagementPage() {
     };
 
     const handleSavePeriods = async () => {
+        setSaving(true);
         try {
             const res = await fetch('/api/school/periods', {
                 method: 'POST',
@@ -122,9 +126,23 @@ export default function TimetableManagementPage() {
                     classId: selectedClassId
                 })
             });
-            if (res.ok) alert("Class-specific periods updated.");
+            if (res.ok) {
+                setAlertConfig({
+                    title: "Structure Sealed",
+                    message: "The institutional day sequence has been successfully synchronized and archived.",
+                    isOpen: true,
+                    variant: "success"
+                });
+            }
         } catch (e) {
-            alert("Failed to save periods.");
+            setAlertConfig({
+                title: "Protocol Fault",
+                message: "Failed to synchronize period data with core infrastructure.",
+                isOpen: true,
+                variant: "error"
+            });
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -155,10 +173,20 @@ export default function TimetableManagementPage() {
             if (res.ok) {
                 fetchTimetable(selectedClassId);
             } else {
-                alert(result.error || "Conflict detected.");
+                setAlertConfig({
+                    title: "Conflict Detected",
+                    message: result.error || "A spatial-temporal overlap was detected in the faculty schedule.",
+                    isOpen: true,
+                    variant: "error"
+                });
             }
         } catch (e) {
-            alert("Network error.");
+            setAlertConfig({
+                title: "Network Fault",
+                message: "Communication with the central timetable node was interrupted.",
+                isOpen: true,
+                variant: "error"
+            });
         }
     };
 
@@ -167,7 +195,12 @@ export default function TimetableManagementPage() {
             const res = await fetch(`/api/school/timetable?id=${entryId}`, { method: 'DELETE' });
             if (res.ok) fetchTimetable(selectedClassId);
         } catch (e) {
-            alert("Failed to delete.");
+            setAlertConfig({
+                title: "Decommission Failed",
+                message: "Unable to purge the selected timetable slot from active registry.",
+                isOpen: true,
+                variant: "error"
+            });
         }
     };
 
@@ -287,7 +320,7 @@ export default function TimetableManagementPage() {
                                 <Button onClick={addPeriod} variant="outline" className="border-zinc-900 bg-zinc-950/50 text-zinc-500 hover:text-white rounded-2xl h-12 px-6 font-black uppercase text-[10px] tracking-widest transition-all">
                                     <Plus className="w-4 h-4 mr-2" /> Add Slot
                                 </Button>
-                                <Button onClick={handleSavePeriods} className="bg-eduGreen-600 hover:bg-eduGreen-500 text-white h-12 px-8 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-2xl transition-all shadow-eduGreen-900/20">
+                                <Button onClick={handleSavePeriods} isLoading={saving} className="bg-eduGreen-600 hover:bg-eduGreen-500 text-white h-12 px-8 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-2xl transition-all shadow-eduGreen-900/20">
                                     <Save className="w-4 h-4 mr-2" /> Seal Structure
                                 </Button>
                             </div>
@@ -354,6 +387,14 @@ export default function TimetableManagementPage() {
                     </Card>
                 </TabsContent>
             </Tabs>
+
+            <AlertModal
+                isOpen={alertConfig.isOpen}
+                onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                variant={alertConfig.variant}
+            />
         </div>
     );
 }

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Calendar, Plus, Trash2, MapPin, Clock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 export default function EventsPage() {
     const [events, setEvents] = useState<any[]>([]);
@@ -14,6 +15,7 @@ export default function EventsPage() {
     const [newEvent, setNewEvent] = useState({ title: "", description: "", date: "" });
     const [loading, setLoading] = useState(true);
     const [createLoading, setCreateLoading] = useState(false);
+    const [deleteId, setDeleteId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchEvents();
@@ -47,10 +49,18 @@ export default function EventsPage() {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm("Delete this event?")) return;
-        await fetch(`/api/school/events?id=${id}`, { method: 'DELETE' });
-        fetchEvents();
+    const handleDelete = (id: string) => {
+        setDeleteId(id);
+    };
+
+    const executeDelete = async () => {
+        if (!deleteId) return;
+        try {
+            await fetch(`/api/school/events?id=${deleteId}`, { method: 'DELETE' });
+            fetchEvents();
+        } finally {
+            setDeleteId(null);
+        }
     };
 
     return (
@@ -170,6 +180,16 @@ export default function EventsPage() {
                     </form>
                 </DialogContent>
             </Dialog>
+
+            <ConfirmationModal
+                isOpen={!!deleteId}
+                onClose={() => setDeleteId(null)}
+                onConfirm={executeDelete}
+                title="Purge Event"
+                description="Are you sure you want to expunge this event from the institutional timeline? This action will synchronize across all faculty calendars."
+                confirmText="Expunge"
+                variant="danger"
+            />
         </div>
     );
 }

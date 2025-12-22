@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Calendar as CalendarIcon, Save, Search, CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { AlertModal } from "@/components/ui/confirmation-modal";
 
 export default function AttendancePage() {
     const [classes, setClasses] = useState<any[]>([]);
@@ -20,6 +21,7 @@ export default function AttendancePage() {
     const [reasons, setReasons] = useState<{ [id: string]: string }>({});
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [showAlert, setShowAlert] = useState(false);
 
     useEffect(() => {
         fetchClasses();
@@ -63,15 +65,15 @@ export default function AttendancePage() {
             if (selectedSubjectId && selectedSubjectId !== "none") queryParams.append("subjectId", selectedSubjectId);
             if (selectedPeriodId && selectedPeriodId !== "full") queryParams.append("periodId", selectedPeriodId);
 
-            const resAtt = await fetch(`/api/teacher/attendance?${queryParams.toString()}`);
+            const resAtt = await fetch(`/api/school/attendance?${queryParams.toString()}`);
             const attData = await resAtt.json();
 
             const attMap: any = {};
             const reasonMap: any = {};
             classStudents.forEach((s: any) => attMap[s.id] = "PRESENT");
 
-            if (attData.records) {
-                attData.records.forEach((r: any) => {
+            if (attData.attendance) {
+                attData.attendance.forEach((r: any) => {
                     attMap[r.studentId] = r.status;
                     reasonMap[r.studentId] = r.reason || "";
                 });
@@ -95,8 +97,9 @@ export default function AttendancePage() {
                 reason: reasons[studentId]
             }));
 
-            await fetch('/api/teacher/attendance', {
+            const res = await fetch('/api/school/attendance', {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     classId: selectedClassId,
                     subjectId: (selectedSubjectId && selectedSubjectId !== "none") ? selectedSubjectId : null,
@@ -105,9 +108,11 @@ export default function AttendancePage() {
                     records
                 })
             });
-            alert("Attendance successfully logged.");
+            if (res.ok) {
+                setShowAlert(true);
+            }
         } catch (e) {
-            alert("Failed to save.");
+            console.error(e);
         } finally {
             setSaving(false);
         }
@@ -132,8 +137,8 @@ export default function AttendancePage() {
                     <p className="text-zinc-500 font-bold text-sm mt-1 uppercase tracking-widest">Mark attendance for institutional records.</p>
                 </div>
                 <div className="flex gap-4">
-                    <Button onClick={handleSave} disabled={saving} className="bg-eduGreen-600 hover:bg-eduGreen-500 text-white h-14 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-eduGreen-900/20 active:scale-95 transition-all">
-                        {saving ? "Syncing..." : <><Save className="w-4 h-4 mr-2" /> Seal Attendance</>}
+                    <Button onClick={handleSave} isLoading={saving} className="bg-eduGreen-600 hover:bg-eduGreen-500 text-white h-14 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-eduGreen-900/20 active:scale-95 transition-all">
+                        <Save className="w-4 h-4 mr-2" /> Seal Attendance
                     </Button>
                 </div>
             </div>
@@ -270,6 +275,14 @@ export default function AttendancePage() {
                     </div>
                 </CardContent>
             </Card>
+
+            <AlertModal
+                isOpen={showAlert}
+                onClose={() => setShowAlert(false)}
+                title="Authority Log Sealed"
+                message="The institutional presence matrix has been successfully encrypted and archived."
+                variant="success"
+            />
         </div>
     );
 }
