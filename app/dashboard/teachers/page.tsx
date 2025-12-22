@@ -116,53 +116,42 @@ export default function TeachersPage() {
     }
 
     return (
-        <div className="space-y-10 animate-in fade-in duration-700 relative z-10">
+        <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in duration-1000 relative z-10">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-zinc-900 pb-10">
                 <div>
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-eduGreen-950/20 border border-eduGreen-900/30 text-[10px] font-black text-eduGreen-500 uppercase tracking-widest mb-4">
-                        <Users className="w-3 h-3 text-eduGreen-500" />
-                        <span>Personnel Management</span>
-                    </div>
-                    <h1 className="text-4xl font-black text-white tracking-tight">Academic Staff</h1>
-                    <p className="text-zinc-500 mt-2 font-bold text-sm leading-relaxed max-w-2xl">
-                        Manage your school's educators, assign disciplines, and monitor system access levels.
-                    </p>
+                    <h1 className="text-5xl font-black tracking-tighter text-white">
+                        Academic <span className="text-eduGreen-500 italic">Personnel</span>
+                    </h1>
+                    <p className="text-zinc-600 font-bold uppercase tracking-[0.2em] text-xs mt-3">Institutional Faculty & Staff Registry</p>
                 </div>
 
                 <Button
                     onClick={() => setIsInviting(!isInviting)}
-                    className="bg-eduGreen-600 hover:bg-eduGreen-500 text-white h-14 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-eduGreen-900/20 transition-all active:scale-95"
+                    className="bg-eduGreen-600 hover:bg-eduGreen-500 text-white h-14 px-10 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-eduGreen-900/20 transition-all active:scale-95 mb-1"
                 >
                     <Plus className="mr-2 h-4 w-4" />
                     {isInviting ? "Close Console" : "Invite Faculty"}
                 </Button>
             </div>
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Quick Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {[
-                    { label: "Active Staff", value: stats.active, icon: UserCheck, color: "text-eduGreen-500", desc: "Successfully onboarded" },
-                    { label: "Pending Invites", value: stats.pending, icon: Mail, color: "text-amber-500", desc: "Awaiting registration" }
+                    { label: "Active Faculty", value: stats.active, sub: "Verified Personnel" },
+                    { label: "Pending Access", value: stats.pending, sub: "Awaiting Uplink" }
                 ].map((stat, i) => (
-                    <Card key={i} className="bg-zinc-900/40 backdrop-blur-md border-zinc-800/50 hover:border-zinc-700 transition-all duration-500 group">
-                        <CardHeader className="flex flex-row items-center justify-between pb-3 space-y-0">
-                            <CardTitle className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500 group-hover:text-white transition-colors">
-                                {stat.label}
-                            </CardTitle>
-                            <stat.icon className={`h-4 w-4 ${stat.color} group-hover:scale-110 transition-transform`} />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-4xl font-black text-white mb-1 tracking-tighter">{stat.value}</div>
-                            <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wider">{stat.desc}</p>
-                        </CardContent>
+                    <Card key={i} className="bg-zinc-950/20 border-zinc-900 rounded-3xl p-8 hover:border-eduGreen-900/30 transition-all border-t-zinc-800/20">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-700 mb-2">{stat.label}</p>
+                        <p className="text-4xl font-black text-white">{stat.value}</p>
+                        <p className="text-[9px] font-bold text-zinc-800 uppercase tracking-widest mt-2">{stat.sub}</p>
                     </Card>
                 ))}
             </div>
 
             {isInviting && (
                 <div className="animate-in fade-in slide-in-from-top-4 duration-500">
-                    <Card className="bg-zinc-950/50 backdrop-blur-2xl border-zinc-800/80 rounded-[2.5rem] overflow-hidden border-t-zinc-700/30">
+                    <Card className="bg-zinc-950/40 backdrop-blur-xl border-zinc-900/50 rounded-[2.5rem] overflow-hidden border-t-zinc-800/20 shadow-2xl">
                         <CardHeader className="text-center pt-10 pb-6">
                             <div className="mx-auto w-14 h-14 bg-zinc-900 rounded-2xl flex items-center justify-center mb-6 border border-zinc-800">
                                 {inviteLink ? <MailCheck className="w-6 h-6 text-eduGreen-500" /> : <Mail className="w-6 h-6 text-eduGreen-500" />}
@@ -235,15 +224,17 @@ export default function TeachersPage() {
                 </div>
             )}
 
-            <Card className="bg-zinc-900/40 backdrop-blur-md border-zinc-800/80 shadow-2xl rounded-[2.5rem] overflow-hidden border-t-zinc-700/30">
-                <CardHeader className="p-8 border-b border-zinc-900/80 flex flex-row items-center justify-between">
+            <Card className="bg-zinc-950/40 backdrop-blur-xl border-zinc-900/50 rounded-[2.5rem] overflow-hidden border-t-zinc-800/20 shadow-2xl">
+                <CardHeader className="p-10 border-b border-zinc-900/80 flex flex-row items-center justify-between">
                     <div>
-                        <CardTitle className="text-xl font-black text-white tracking-tight">Staff Directory</CardTitle>
-                        <CardDescription className="text-zinc-600 font-bold uppercase tracking-widest text-[9px] mt-1">Authorized Academic Personnel</CardDescription>
+                        <CardTitle className="text-2xl font-black text-white tracking-tight leading-tight">Staff Directory</CardTitle>
+                        <p className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em] mt-1">Authorized Academic Personnel</p>
                     </div>
-                    <div className="flex items-center gap-2 px-4 py-2 bg-zinc-950/50 rounded-xl border border-zinc-900">
-                        <Search className="w-3.5 h-3.5 text-zinc-700" />
-                        <span className="text-[10px] text-zinc-700 font-black uppercase tracking-widest">Filter System</span>
+                    <div className="flex bg-zinc-950 p-1 rounded-xl border border-zinc-900 shadow-2xl">
+                        <div className="flex items-center gap-2 px-4 py-2">
+                            <Search className="w-3.5 h-3.5 text-zinc-700" />
+                            <span className="text-[10px] text-zinc-700 font-black uppercase tracking-widest">Filter System</span>
+                        </div>
                     </div>
                 </CardHeader>
                 <CardContent className="p-0">

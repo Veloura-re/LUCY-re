@@ -22,6 +22,7 @@ import Link from "next/link";
 import { SpringingLoader } from "@/components/dashboard/springing-loader";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function HomeroomDashboard() {
     const [data, setData] = useState<any>(null);
@@ -403,15 +404,18 @@ function StudentProfileModal({ student, onClose, onUpdate }: { student: any, onC
                                 <div className="flex items-center justify-between">
                                     <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600">New Entry Input</h4>
                                     {activeTab === 'REMARKS' && (
-                                        <select
-                                            value={term}
-                                            onChange={(e) => setTerm(e.target.value)}
-                                            className="bg-zinc-950 border border-zinc-800 text-[10px] font-black uppercase tracking-widest text-zinc-500 px-3 py-1 rounded-lg outline-none"
-                                        >
-                                            <option>Term 1 2024</option>
-                                            <option>Term 2 2024</option>
-                                            <option>Final 2024</option>
-                                        </select>
+                                        <div className="w-40">
+                                            <Select value={term} onValueChange={setTerm}>
+                                                <SelectTrigger className="h-10 rounded-xl bg-zinc-950 border-zinc-900 text-[10px] uppercase tracking-widest text-zinc-500">
+                                                    <SelectValue placeholder="Select Term" />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-zinc-950 border-zinc-900">
+                                                    <SelectItem value="Term 1 2024">Term 1 2024</SelectItem>
+                                                    <SelectItem value="Term 2 2024">Term 2 2024</SelectItem>
+                                                    <SelectItem value="Final 2024">Final 2024</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
                                     )}
                                 </div>
                                 <textarea

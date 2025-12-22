@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Clock, Book, User, CalendarDays, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SpringingLoader } from "@/components/dashboard/springing-loader";
 
 const DAYS = [
     { label: "Monday", value: "MON" },
@@ -37,23 +38,28 @@ export default function StudentTimetablePage() {
 
     const daySchedule = timetable.filter(entry => entry.dayOfWeek === selectedDay);
 
-    if (loading) return <div className="p-20 text-center text-zinc-800 font-bold uppercase tracking-[0.3em] h-screen flex items-center justify-center animate-pulse">Retrieving Educational Roadmap...</div>;
+    if (loading) {
+        return (
+            <div className="min-h-[60vh] flex items-center justify-center">
+                <SpringingLoader message="Retrieving Educational Roadmap" />
+            </div>
+        );
+    }
 
     return (
-        <div className="max-w-4xl mx-auto space-y-10 py-10 animate-in fade-in slide-in-from-bottom-2 duration-1000">
+        <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in duration-1000 relative z-10 py-12">
             {/* Header */}
-            <div className="text-center space-y-4">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-eduGreen-950/20 border border-eduGreen-900/30 text-eduGreen-500 text-[10px] font-black uppercase tracking-widest">
-                    <GraduationCap className="w-3.5 h-3.5" /> Academic Routine
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-zinc-900 pb-10">
+                <div>
+                    <h1 className="text-5xl font-black tracking-tighter text-white">
+                        The <span className="text-eduGreen-500 italic">Blueprint</span>
+                    </h1>
+                    <p className="text-zinc-600 font-bold uppercase tracking-[0.2em] text-xs mt-3">Academic Routine & Cohort Synchronized Progression</p>
                 </div>
-                <h1 className="text-5xl font-black tracking-tighter text-dm-textMain uppercase italic">
-                    The <span className="text-eduGreen-500 not-italic">Blueprint</span>
-                </h1>
-                <p className="text-zinc-600 font-bold uppercase tracking-[0.2em] text-[10px]">Cohort Synchronized Progression</p>
             </div>
 
             {/* Day Selector */}
-            <div className="flex justify-center gap-2 overflow-x-auto pb-4 no-scrollbar">
+            <div className="flex justify-center gap-3 overflow-x-auto pb-4 no-scrollbar">
                 {DAYS.map(day => (
                     <button
                         key={day.value}
@@ -62,7 +68,7 @@ export default function StudentTimetablePage() {
                             "min-w-28 px-6 py-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-1",
                             selectedDay === day.value
                                 ? "bg-eduGreen-600 border-eduGreen-500 text-white shadow-xl shadow-eduGreen-900/30 -translate-y-1"
-                                : "bg-zinc-950 border-zinc-900 text-zinc-700 hover:border-zinc-800 hover:text-zinc-400"
+                                : "bg-zinc-950/40 backdrop-blur-xl border-zinc-900 text-zinc-700 hover:border-eduGreen-600/30 hover:text-white"
                         )}
                     >
                         <span className="text-[10px] font-black uppercase tracking-widest opacity-60">{day.label.slice(0, 3)}</span>
@@ -72,9 +78,9 @@ export default function StudentTimetablePage() {
             </div>
 
             {/* Timeline */}
-            <div className="space-y-6 relative">
+            <div className="space-y-8 relative">
                 {/* Vertical Line */}
-                <div className="absolute left-[2.25rem] top-0 bottom-0 w-0.5 bg-zinc-900 hidden md:block" />
+                <div className="absolute left-[2.25rem] top-0 bottom-0 w-0.5 bg-zinc-900/50 hidden md:block" />
 
                 {daySchedule.length === 0 ? (
                     <div className="py-24 text-center text-zinc-800 font-black uppercase tracking-[0.4em] text-xs italic opacity-30">
@@ -88,10 +94,10 @@ export default function StudentTimetablePage() {
                                     {i + 1}
                                 </div>
                             </div>
-                            <Card className="flex-1 bg-zinc-950/40 backdrop-blur-md border border-zinc-900/50 hover:border-eduGreen-900/30 transition-all rounded-3xl overflow-hidden group/card shadow-2xl">
+                            <Card className="flex-1 bg-zinc-950/40 backdrop-blur-xl border-zinc-900/50 hover:border-eduGreen-900/40 transition-all rounded-[2.5rem] overflow-hidden group/card shadow-2xl border-t-zinc-800/20">
                                 <CardContent className="p-0 flex items-stretch">
                                     <div className="p-8 flex-1">
-                                        <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center justify-between mb-6">
                                             <div className="px-3 py-1 rounded-lg bg-zinc-900 text-zinc-500 font-black text-[9px] uppercase tracking-widest border border-zinc-800">
                                                 {slot.period?.name}
                                             </div>
@@ -100,13 +106,13 @@ export default function StudentTimetablePage() {
                                                 {slot.period?.startTime} - {slot.period?.endTime}
                                             </div>
                                         </div>
-                                        <h3 className="text-3xl font-black text-dm-textMain tracking-tight leading-none mb-3">
+                                        <h3 className="text-3xl font-black text-white tracking-tight leading-none mb-4">
                                             {slot.subject?.name}
                                         </h3>
                                         <div className="flex items-center gap-4">
-                                            <div className="flex items-center gap-2 text-[10px] font-black text-zinc-600 uppercase tracking-widest">
-                                                <div className="w-6 h-6 rounded-lg bg-zinc-900 flex items-center justify-center group-hover/card:bg-eduGreen-950 transition-colors">
-                                                    <User className="w-3.5 h-3.5 text-zinc-500" />
+                                            <div className="flex items-center gap-3 text-[10px] font-black text-zinc-600 uppercase tracking-widest">
+                                                <div className="w-8 h-8 rounded-xl bg-zinc-950 border border-zinc-900 flex items-center justify-center group-hover/card:border-eduGreen-900/30 transition-all">
+                                                    <User className="w-4 h-4 text-zinc-500" />
                                                 </div>
                                                 {slot.teacher?.name}
                                             </div>

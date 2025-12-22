@@ -36,7 +36,7 @@ export async function POST(request: Request) {
         const origin = request.headers.get('origin') || 'http://localhost:3000';
         const inviteUrl = `${origin}/invite/${token}`;
 
-        const emailResult = await sendInviteEmail(email, inviteUrl, dbUser.school.name, token);
+        const emailResult = await sendInviteEmail(email, inviteUrl, dbUser.school.name, token, 'TEACHER');
 
         return NextResponse.json({
             token,

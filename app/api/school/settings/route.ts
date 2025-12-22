@@ -31,7 +31,7 @@ export async function PATCH(request: Request) {
             data: {
                 name,
                 schoolCode,
-                logoUrl
+                logoUrl // Verified column in DB via pull
             }
         });
 

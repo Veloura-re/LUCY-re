@@ -8,6 +8,381 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model User {
+  id                 String              @id @default(uuid())
+  email              String              @unique
+  passwordHash       String?
+  name               String
+  role               Role
+  schoolId           String?
+  verified           Boolean             @default(false)
+  bio                String?
+  preferences        Json?               @default("{\"neuralSync\": true, \"analyticExport\": false, \"immersiveVisuals\": true}")
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  attendanceRecords  AttendanceRecord[]
+  lockedAttendance   AttendanceRecord[]  @relation("AttendanceLockedBy")
+  auditLogs          AuditLog[]
+  issuedCertificates Certificate[]
+  chatRooms          ChatRoomMember[]
+  classesHomeroom    Class[]             @relation("HomeroomTeacher")
+  createdEvents      Event[]
+  createdExams       Exam[]
+  lockedExams        Exam[]              @relation("ExamLockedBy")
+  gradeRecords       GradeRecord[]
+  authoredNotes      InternalNote[]      @relation("AuthorNotes")
+  sentMessages       Message[]           @relation("SentMessages")
+  receivedMessages   Message[]           @relation("ReceivedMessages")
+  parentLinks        ParentStudentLink[]
+  student            Student?
+  authoredRemarks    StudentRemark[]     @relation("TeacherRemarks")
+  teacherAssignments TeacherAssignment[]
+  timetable          Timetable[]
+  school             School?             @relation(fields: [schoolId], references: [id])
+}
+
+model School {
+  id               String       @id @default(uuid())
+  name             String
+  schoolCode       String       @unique
+  domain           String?
+  status           SchoolStatus @default(PENDING)
+  createdAt        DateTime     @default(now())
+  attendanceConfig Json?        @default("{\"type\": \"PERIOD\", \"lockAfterMinutes\": 30, \"enableLateMarking\": true}")
+  logoUrl          String?
+  chatRooms        ChatRoom[]
+  events           Event[]
+  grades           Grade[]
+  messages         Message[]
+  periods          Period[]
+  students         Student[]
+  subjects         Subject[]
+  users            User[]
+  feeStructures    FeeStructure[]
+  invoices         Invoice[]
+}
+
+model Grade {
+  id       String    @id @default(uuid())
+  schoolId String
+  name     String
+  level    Int       @default(0)
+  classes  Class[]
+  school   School    @relation(fields: [schoolId], references: [id])
+  students Student[]
+  feeStructures FeeStructure[]
+}
+
+model Class {
+  id                 String              @id @default(uuid())
+  gradeId            String
+  name               String
+  homeroomTeacherId  String?
+  attendanceRecords  AttendanceRecord[]
+  grade              Grade               @relation(fields: [gradeId], references: [id])
+  homeroomTeacher    User?               @relation("HomeroomTeacher", fields: [homeroomTeacherId], references: [id])
+  exams              Exam[]
+  messages           Message[]
+  periods            Period[]
+  students           Student[]
+  teacherAssignments TeacherAssignment[]
+  timetable          Timetable[]
+}
+
+model Subject {
+  id                 String              @id @default(uuid())
+  schoolId           String
+  name               String
+  attendanceRecords  AttendanceRecord[]
+  exams              Exam[]
+  gradeRecords       GradeRecord[]
+  school             School              @relation(fields: [schoolId], references: [id])
+  teacherAssignments TeacherAssignment[]
+  timetable          Timetable[]
+}
+
+model TeacherAssignment {
+  id        String  @id @default(uuid())
+  teacherId String
+  classId   String
+  subjectId String
+  class     Class   @relation(fields: [classId], references: [id])
+  subject   Subject @relation(fields: [subjectId], references: [id])
+  teacher   User    @relation(fields: [teacherId], references: [id])
+}
+
+model Student {
+  id                String              @id @default(uuid())
+  schoolId          String
+  classId           String?
+  gradeId           String
+  userId            String?             @unique
+  firstName         String
+  lastName          String
+  email             String?
+  studentCode       String              @unique
+  dob               DateTime?
+  enrollmentStatus  EnrollmentStatus    @default(ACTIVE)
+  attendanceRecords AttendanceRecord[]
+  certificates      Certificate[]
+  examAttempts      ExamAttempt[]
+  gradeRecords      GradeRecord[]
+  internalNotes     InternalNote[]
+  parentLinks       ParentStudentLink[]
+  class             Class?              @relation(fields: [classId], references: [id])
+  grade             Grade               @relation(fields: [gradeId], references: [id])
+  school            School              @relation(fields: [schoolId], references: [id])
+  user              User?               @relation(fields: [userId], references: [id])
+  remarks           StudentRemark[]
+  invoices          Invoice[]
+}
+
+model ParentStudentLink {
+  id            String        @id @default(uuid())
+  parentId      String
+  studentId     String
+  verifiedAt    DateTime?
+  pairingMethod PairingMethod
+  parent        User          @relation(fields: [parentId], references: [id])
+  student       Student       @relation(fields: [studentId], references: [id])
+}
+
+model Exam {
+  id                String             @id @default(uuid())
+  classId           String
+  subjectId         String
+  title             String
+  createdById       String
+  availableFrom     DateTime?
+  dueAt             DateTime?
+  duration          Int?
+  config            Json?
+  isLocked          Boolean            @default(false)
+  lockedAt          DateTime?
+  lockedById        String?
+  attendanceRecords AttendanceRecord[]
+  class             Class              @relation(fields: [classId], references: [id])
+  createdBy         User               @relation(fields: [createdById], references: [id])
+  lockedBy          User?              @relation("ExamLockedBy", fields: [lockedById], references: [id])
+  subject           Subject            @relation(fields: [subjectId], references: [id])
+  attempts          ExamAttempt[]
+  gradeRecords      GradeRecord[]
+}
+
+model ExamAttempt {
+  id          String    @id @default(uuid())
+  examId      String
+  studentId   String
+  startedAt   DateTime?
+  submittedAt DateTime?
+  score       Decimal?
+  answers     Json?
+  status      String?
+  exam        Exam      @relation(fields: [examId], references: [id])
+  student     Student   @relation(fields: [studentId], references: [id])
+}
+
+model GradeRecord {
+  id          String      @id @default(uuid())
+  studentId   String
+  subjectId   String
+  examId      String?
+  score       Float
+  createdById String
+  createdAt   DateTime    @default(now())
+  remark      String?
+  status      GradeStatus @default(SUBMITTED)
+  createdBy   User        @relation(fields: [createdById], references: [id])
+  exam        Exam?       @relation(fields: [examId], references: [id])
+  student     Student     @relation(fields: [studentId], references: [id])
+  subject     Subject     @relation(fields: [subjectId], references: [id])
+}
+
+model AttendanceRecord {
+  id          String           @id @default(uuid())
+  studentId   String
+  classId     String
+  subjectId   String?
+  examId      String?
+  date        DateTime
+  status      AttendanceStatus
+  reason      String?
+  isLocked    Boolean          @default(false)
+  lockedAt    DateTime?
+  lockedById  String?
+  createdById String
+  createdAt   DateTime         @default(now())
+  periodId    String?
+  class       Class            @relation(fields: [classId], references: [id])
+  createdBy   User             @relation(fields: [createdById], references: [id])
+  exam        Exam?            @relation(fields: [examId], references: [id])
+  lockedBy    User?            @relation("AttendanceLockedBy", fields: [lockedById], references: [id])
+  period      Period?          @relation(fields: [periodId], references: [id])
+  student     Student          @relation(fields: [studentId], references: [id])
+  subject     Subject?         @relation(fields: [subjectId], references: [id])
+
+  @@index([studentId])
+  @@index([classId])
+  @@index([examId])
+  @@index([date])
+}
+
+model Message {
+  id          String   @id @default(uuid())
+  chatRoomId  String
+  fromUserId  String
+  toUserId    String?
+  classId     String?
+  schoolId    String
+  content     String
+  attachments Json?
+  isPinned    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  chatRoom    ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  class       Class?   @relation(fields: [classId], references: [id])
+  fromUser    User     @relation("SentMessages", fields: [fromUserId], references: [id])
+  school      School   @relation(fields: [schoolId], references: [id])
+  toUser      User?    @relation("ReceivedMessages", fields: [toUserId], references: [id])
+
+  @@index([chatRoomId])
+  @@index([schoolId])
+}
+
+model ChatRoom {
+  id        String           @id @default(uuid())
+  schoolId  String
+  name      String?
+  type      ChatRoomType     @default(PRIVATE)
+  metadata  Json?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  school    School           @relation(fields: [schoolId], references: [id])
+  members   ChatRoomMember[]
+  messages  Message[]
+
+  @@index([schoolId])
+}
+
+model ChatRoomMember {
+  id         String   @id @default(uuid())
+  chatRoomId String
+  userId     String
+  joinedAt   DateTime @default(now())
+  lastReadAt DateTime @default(now())
+  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([chatRoomId, userId])
+  @@index([userId])
+}
+
+model Certificate {
+  id         String   @id @default(uuid())
+  studentId  String
+  issuedById String
+  type       String
+  pdfUrl     String?
+  issuedAt   DateTime @default(now())
+  issuedBy   User     @relation(fields: [issuedById], references: [id])
+  student    Student  @relation(fields: [studentId], references: [id])
+}
+
+model Event {
+  id          String   @id @default(uuid())
+  schoolId    String
+  title       String
+  description String?
+  eventDate   DateTime
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  school      School   @relation(fields: [schoolId], references: [id])
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  userId       String
+  action       String
+  resourceType String
+  resourceId   String?
+  before       Json?
+  after        Json?
+  ip           String?
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id])
+}
+
+model InviteToken {
+  id        String    @id @default(uuid())
+  token     String    @unique
+  email     String
+  role      Role
+  schoolId  String?
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model StudentRemark {
+  id        String   @id @default(uuid())
+  studentId String
+  teacherId String
+  content   String
+  term      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher   User     @relation("TeacherRemarks", fields: [teacherId], references: [id])
+
+  @@index([studentId])
+}
+
+model InternalNote {
+  id        String   @id @default(uuid())
+  studentId String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  author    User     @relation("AuthorNotes", fields: [authorId], references: [id])
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+}
+
+model Period {
+  id                String             @id @default(uuid())
+  schoolId          String
+  name              String
+  startTime         String
+  endTime           String
+  isBreak           Boolean            @default(false)
+  order             Int                @default(0)
+  classId           String?
+  attendanceRecords AttendanceRecord[]
+  class             Class?             @relation(fields: [classId], references: [id])
+  school            School             @relation(fields: [schoolId], references: [id])
+  timetables        Timetable[]
+
+  @@index([schoolId])
+  @@index([classId])
+}
+
+model Timetable {
+  id        String    @id @default(uuid())
+  classId   String
+  subjectId String
+  teacherId String
+  periodId  String
+  dayOfWeek DayOfWeek
+  class     Class     @relation(fields: [classId], references: [id])
+  period    Period    @relation(fields: [periodId], references: [id])
+  subject   Subject   @relation(fields: [subjectId], references: [id])
+  teacher   User      @relation(fields: [teacherId], references: [id])
+
+  @@unique([classId, periodId, dayOfWeek])
+  @@index([teacherId])
+}
+
 enum Role {
   SUPERADMIN
   PRINCIPAL
@@ -57,391 +432,110 @@ enum DayOfWeek {
   SUN
 }
 
-model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String?
-  name         String
-  role         Role
-  schoolId     String?
-  school       School?  @relation(fields: [schoolId], references: [id])
-  verified     Boolean  @default(false)
-  bio          String?
-  preferences  Json?    @default("{\"immersiveVisuals\": true, \"neuralSync\": true, \"analyticExport\": false}")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  // Relations based on role
-  classesHomeroom    Class[]             @relation("HomeroomTeacher")
-  teacherAssignments TeacherAssignment[]
-  createdExams       Exam[]
-  issuedCertificates Certificate[]
-  createdEvents      Event[]
-  sentMessages       Message[]           @relation("SentMessages")
-  receivedMessages   Message[]           @relation("ReceivedMessages")
-  auditLogs          AuditLog[]
-  parentLinks        ParentStudentLink[]
-  gradeRecords       GradeRecord[]
-  student            Student?
-  attendanceRecords  AttendanceRecord[]
-  lockedAttendance   AttendanceRecord[]  @relation("AttendanceLockedBy")
-  lockedExams        Exam[]              @relation("ExamLockedBy")
-  chatRooms          ChatRoomMember[]
-  authoredRemarks    StudentRemark[]     @relation("TeacherRemarks")
-  authoredNotes      InternalNote[]      @relation("AuthorNotes")
-  timetable          Timetable[]
-}
-
-model School {
-  id         String       @id @default(uuid())
-  name       String
-  schoolCode String       @unique
-  domain     String?
-  logoUrl    String?
-  status     SchoolStatus @default(PENDING)
-  createdAt  DateTime     @default(now())
-
-  users    User[]
-  grades   Grade[]
-  subjects Subject[]
-  students Student[]
-  events   Event[]
-  messages Message[]
-  chatRooms ChatRoom[]
-  periods   Period[]
-  attendanceConfig Json? @default("{\"type\": \"PERIOD\", \"lockAfterMinutes\": 30, \"enableLateMarking\": true}")
-}
-
-model Grade {
-  id       String  @id @default(uuid())
-  schoolId String
-  school   School  @relation(fields: [schoolId], references: [id])
-  name     String
-  level    Int     @default(0)
-  classes  Class[]
-  students Student[]
-}
-
-model Class {
-  id                String  @id @default(uuid())
-  gradeId           String
-  grade             Grade   @relation(fields: [gradeId], references: [id])
-  name              String
-  homeroomTeacherId String?
-  homeroomTeacher   User?   @relation("HomeroomTeacher", fields: [homeroomTeacherId], references: [id])
-
-  students           Student[]
-  teacherAssignments TeacherAssignment[]
-  exams              Exam[]
-  messages           Message[]
-  attendanceRecords  AttendanceRecord[]
-  timetable          Timetable[]
-  periods            Period[]
-}
-
-model Subject {
-  id       String @id @default(uuid())
-  schoolId String
-  school   School @relation(fields: [schoolId], references: [id])
-  name     String
-
-  teacherAssignments TeacherAssignment[]
-  exams              Exam[]
-  gradeRecords       GradeRecord[]
-  attendanceRecords  AttendanceRecord[]
-  timetable          Timetable[]
-}
-
-model TeacherAssignment {
-  id        String  @id @default(uuid())
-  teacherId String
-  teacher   User    @relation(fields: [teacherId], references: [id])
-  classId   String
-  class     Class   @relation(fields: [classId], references: [id])
-  subjectId String
-  subject   Subject @relation(fields: [subjectId], references: [id])
-}
-
-model Student {
-  id               String           @id @default(uuid())
-  schoolId         String
-  school           School           @relation(fields: [schoolId], references: [id])
-  classId          String?          // Made optional if not assigned yet
-  class            Class?           @relation(fields: [classId], references: [id])
-  gradeId          String
-  grade            Grade            @relation(fields: [gradeId], references: [id])
-  userId           String?          @unique
-  user             User?            @relation(fields: [userId], references: [id])
-  firstName        String
-  lastName         String
-  email            String?          // Contact email before user linking
-  studentCode      String           @unique
-  dob              DateTime?
-  enrollmentStatus EnrollmentStatus @default(ACTIVE)
-
-  parentLinks  ParentStudentLink[]
-  examAttempts ExamAttempt[]
-  gradeRecords GradeRecord[]
-  certificates Certificate[]
-  attendanceRecords AttendanceRecord[]
-  remarks           StudentRemark[]
-  internalNotes    InternalNote[]
-}
-
-model ParentStudentLink {
-  id            String        @id @default(uuid())
-  parentId      String
-  parent        User          @relation(fields: [parentId], references: [id])
-  studentId     String
-  student       Student       @relation(fields: [studentId], references: [id])
-  verifiedAt    DateTime?
-  pairingMethod PairingMethod
-}
-
-model Exam {
-  id            String    @id @default(uuid())
-  classId       String
-  class         Class     @relation(fields: [classId], references: [id])
-  subjectId     String
-  subject       Subject   @relation(fields: [subjectId], references: [id])
-  title         String
-  createdById   String
-  createdBy     User      @relation(fields: [createdById], references: [id])
-  availableFrom DateTime?
-  dueAt         DateTime?
-  duration      Int? // Minutes
-  config        Json? // Anti-cheat configs etc
-  isLocked      Boolean   @default(false)
-  lockedAt      DateTime?
-  lockedById    String?
-  lockedBy      User?     @relation("ExamLockedBy", fields: [lockedById], references: [id])
-
-  attempts          ExamAttempt[]
-  gradeRecords      GradeRecord[]
-  attendanceRecords AttendanceRecord[]
-}
-
-model ExamAttempt {
-  id          String    @id @default(uuid())
-  examId      String
-  exam        Exam      @relation(fields: [examId], references: [id])
-  studentId   String
-  student     Student   @relation(fields: [studentId], references: [id])
-  startedAt   DateTime?
-  submittedAt DateTime?
-  score       Decimal?
-  answers     Json?
-  status      String? // PENDING, SUBMITTED, GRADED
-}
-
-model GradeRecord {
-  id          String   @id @default(uuid())
-  studentId   String
-  student     Student  @relation(fields: [studentId], references: [id])
-  subjectId   String
-  subject     Subject  @relation(fields: [subjectId], references: [id])
-  examId      String?
-  exam        Exam?    @relation(fields: [examId], references: [id])
-  score       Float
-  remark      String?
-  status      GradeStatus @default(SUBMITTED)
-  createdById String
-  createdBy   User     @relation(fields: [createdById], references: [id])
-
-  createdAt   DateTime @default(now())
-}
-
-model AttendanceRecord {
-  id          String           @id @default(uuid())
-  studentId   String
-  student     Student          @relation(fields: [studentId], references: [id])
-  classId     String
-  class       Class            @relation(fields: [classId], references: [id])
-  subjectId   String?
-  subject     Subject?         @relation(fields: [subjectId], references: [id])
-  examId      String?
-  exam        Exam?            @relation(fields: [examId], references: [id])
-  date        DateTime
-  status      AttendanceStatus
-  reason      String?
-  isLocked    Boolean          @default(false)
-  lockedAt    DateTime?
-  lockedById  String?
-  lockedBy    User?            @relation("AttendanceLockedBy", fields: [lockedById], references: [id])
-  createdById String
-  createdBy   User             @relation(fields: [createdById], references: [id])
-  periodId    String?
-  period      Period?          @relation(fields: [periodId], references: [id])
-  createdAt   DateTime         @default(now())
-
-  @@index([studentId])
-  @@index([classId])
-  @@index([examId])
-  @@index([date])
-}
-
-model Message {
-  id          String   @id @default(uuid())
-  chatRoomId  String
-  chatRoom    ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
-  fromUserId  String
-  fromUser    User     @relation("SentMessages", fields: [fromUserId], references: [id])
-  toUserId    String?
-  toUser      User?    @relation("ReceivedMessages", fields: [toUserId], references: [id])
-  classId     String?
-  class       Class?   @relation(fields: [classId], references: [id])
-  schoolId    String
-  school      School   @relation(fields: [schoolId], references: [id])
-  content     String
-  attachments Json?
-  isPinned    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-
-  @@index([chatRoomId])
-  @@index([schoolId])
-}
-
-model ChatRoom {
-  id        String       @id @default(uuid())
-  schoolId  String
-  school    School       @relation(fields: [schoolId], references: [id])
-  name      String?
-  type      ChatRoomType @default(PRIVATE)
-  metadata  Json?
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-
-  members  ChatRoomMember[]
-  messages Message[]
-
-  @@index([schoolId])
-}
-
-model ChatRoomMember {
-  id         String   @id @default(uuid())
-  chatRoomId String
-  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  joinedAt   DateTime @default(now())
-  lastReadAt DateTime @default(now())
-
-  @@unique([chatRoomId, userId])
-  @@index([userId])
-}
-
-model Certificate {
-  id         String   @id @default(uuid())
-  studentId  String
-  student    Student  @relation(fields: [studentId], references: [id])
-  issuedById String
-  issuedBy   User     @relation(fields: [issuedById], references: [id])
-  type       String
-  pdfUrl     String?
-  issuedAt   DateTime @default(now())
-}
-
-model Event {
-  id          String   @id @default(uuid())
-  schoolId    String
-  school      School   @relation(fields: [schoolId], references: [id])
-  title       String
-  description String?
-  eventDate   DateTime
-  createdById String
-  createdBy   User     @relation(fields: [createdById], references: [id])
-}
-
-model AuditLog {
-  id           String   @id @default(uuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id])
-  action       String
-  resourceType String
-  resourceId   String?
-  before       Json?
-  after        Json?
-  ip           String?
-  createdAt    DateTime @default(now())
-}
-
-model InviteToken {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  email     String
-  role      Role
-  schoolId  String?
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime @default(now())
-}
-
-model StudentRemark {
-  id          String   @id @default(uuid())
-  studentId   String
-  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  teacherId   String
-  teacher     User     @relation("TeacherRemarks", fields: [teacherId], references: [id])
-  content     String
-  term        String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([studentId])
-}
-
-model InternalNote {
-  id          String   @id @default(uuid())
-  studentId   String
-  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  authorId    String
-  author      User     @relation("AuthorNotes", fields: [authorId], references: [id])
-  content     String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([studentId])
-}
-
-model Period {
-  id        String   @id @default(uuid())
-  schoolId  String
-  school    School   @relation(fields: [schoolId], references: [id])
-  name      String   // e.g., "Period 1"
-  startTime String   // e.g., "08:00"
-  endTime   String   // e.g., "08:45"
-  isBreak   Boolean  @default(false)
-  order     Int      @default(0)
-
-  classId   String?
-  class     Class?   @relation(fields: [classId], references: [id])
-  timetables        Timetable[]
-  attendanceRecords AttendanceRecord[]
-
-  @@index([schoolId])
-  @@index([classId])
-}
-
-model Timetable {
-  id        String    @id @default(uuid())
-  classId   String
-  class     Class     @relation(fields: [classId], references: [id])
-  subjectId String
-  subject   Subject   @relation(fields: [subjectId], references: [id])
-  teacherId String
-  teacher   User      @relation(fields: [teacherId], references: [id])
-  periodId  String
-  period    Period    @relation(fields: [periodId], references: [id])
-  dayOfWeek DayOfWeek
-
-  @@unique([classId, periodId, dayOfWeek])
-  @@index([teacherId])
-}
-
 enum GradeStatus {
   SUBMITTED
   PENDING
   REVIEWED
   REMARK_REQUESTED
   REMARKED
+}
+
+model FeeStructure {
+  id          String      @id @default(uuid())
+  schoolId    String
+  gradeId     String?
+  name        String
+  amount      Decimal
+  category    FeeCategory @default(TUITION)
+  description String?
+  frequency   FeeFrequency @default(TERM)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  school      School      @relation(fields: [schoolId], references: [id])
+  grade       Grade?      @relation(fields: [gradeId], references: [id])
+  invoiceItems InvoiceItem[]
+
+  @@index([schoolId])
+}
+
+model Invoice {
+  id          String        @id @default(uuid())
+  studentId   String
+  schoolId    String
+  amount      Decimal
+  dueDate     DateTime
+  status      InvoiceStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  student     Student       @relation(fields: [studentId], references: [id])
+  school      School        @relation(fields: [schoolId], references: [id])
+  items       InvoiceItem[]
+  payments    Payment[]
+
+  @@index([studentId])
+  @@index([schoolId])
+}
+
+model InvoiceItem {
+  id             String        @id @default(uuid())
+  invoiceId      String
+  feeStructureId String?
+  name           String
+  amount         Decimal
+  description    String?
+  
+  invoice        Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  feeStructure   FeeStructure? @relation(fields: [feeStructureId], references: [id])
+}
+
+model Payment {
+  id          String        @id @default(uuid())
+  invoiceId   String
+  amount      Decimal
+  method      PaymentMethod @default(CASH)
+  reference   String?
+  status      PaymentStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+  
+  invoice     Invoice       @relation(fields: [invoiceId], references: [id])
+}
+
+enum FeeCategory {
+  TUITION
+  TRANSPORT
+  SPORTS
+  LIBRARY
+  LABORATORY
+  ACTIVITIES
+  OTHER
+}
+
+enum FeeFrequency {
+  ONCE
+  MONTHLY
+  TERM
+  ANNUAL
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  BANK_TRANSFER
+  MOBILE_MONEY
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
 }

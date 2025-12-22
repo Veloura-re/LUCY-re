@@ -69,24 +69,20 @@ export default function AttendanceSettingsPage() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto space-y-10 animate-in fade-in duration-700">
+        <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in duration-1000 relative z-10">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-zinc-900 pb-10">
                 <div>
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-eduGreen-950/20 border border-eduGreen-900/30 text-[10px] font-black text-eduGreen-500 uppercase tracking-widest mb-4">
-                        <ShieldCheck className="w-3 h-3 text-eduGreen-500" />
-                        <span>System Policy</span>
-                    </div>
-                    <h1 className="text-4xl font-black text-white tracking-tight italic">Attendance <span className="text-zinc-700 not-italic ml-2">Logic</span></h1>
-                    <p className="text-zinc-500 mt-2 font-bold text-sm leading-relaxed max-w-2xl uppercase tracking-wider">
-                        Configure institutional rules for presence verification.
-                    </p>
+                    <h1 className="text-5xl font-black tracking-tighter text-white">
+                        Attendance <span className="text-eduGreen-500 italic">Logic</span>
+                    </h1>
+                    <p className="text-zinc-600 font-bold uppercase tracking-[0.2em] text-xs mt-3">Advanced Institutional Presence Verification</p>
                 </div>
 
                 <Button
                     onClick={handleSave}
                     disabled={saving}
-                    className="bg-eduGreen-600 hover:bg-eduGreen-500 text-white h-14 px-10 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-eduGreen-900/20 transition-all active:scale-95"
+                    className="bg-eduGreen-600 hover:bg-eduGreen-500 text-white h-14 px-10 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-eduGreen-900/20 transition-all active:scale-95 mb-1"
                 >
                     {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : success ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
                     {saving ? "Syncing..." : success ? "Protocols Saved" : "Commit Changes"}
@@ -95,7 +91,7 @@ export default function AttendanceSettingsPage() {
 
             <div className="grid gap-8">
                 {/* Tracking Mode */}
-                <Card className="bg-zinc-950/40 backdrop-blur-md border-zinc-900 shadow-2xl rounded-[2.5rem] overflow-hidden">
+                <Card className="bg-zinc-950/40 backdrop-blur-xl border-zinc-900/50 hover:border-eduGreen-900/30 transition-all rounded-[2.5rem] overflow-hidden group shadow-2xl">
                     <CardHeader className="p-8 border-b border-zinc-900/50">
                         <div className="flex items-center gap-4">
                             <div className="p-3 bg-zinc-900 rounded-2xl border border-zinc-800">
@@ -139,7 +135,7 @@ export default function AttendanceSettingsPage() {
                 </Card>
 
                 {/* Locking & Time Constraints */}
-                <Card className="bg-zinc-950/40 backdrop-blur-md border-zinc-900 shadow-2xl rounded-[2.5rem] overflow-hidden">
+                <Card className="bg-zinc-950/40 backdrop-blur-xl border-zinc-900/50 hover:border-eduGreen-900/30 transition-all rounded-[2.5rem] overflow-hidden group shadow-2xl">
                     <CardHeader className="p-8 border-b border-zinc-900/50">
                         <div className="flex items-center gap-4">
                             <div className="p-3 bg-zinc-900 rounded-2xl border border-zinc-800">

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { handleApiError, requireRole, requireSchoolLinked } from '@/lib/security';
 import { logActivity } from '@/lib/audit';
+import { sendInviteEmail } from '@/lib/email';
+import { Role } from '@prisma/client';
 
 // GET: List all students in the school
 export async function GET(request: Request) {
@@ -87,6 +89,26 @@ export async function POST(request: Request) {
             resourceId: student.id,
             after: student
         });
+
+        // Create Invite Token and Send Email if email provided
+        if (email) {
+            const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            await prisma.inviteToken.create({
+                data: {
+                    token,
+                    email,
+                    role: 'STUDENT',
+                    schoolId: targetSchoolId!,
+                    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+                }
+            });
+
+            const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+            const inviteUrl = `${origin}/invite/${token}`;
+
+            const school = await prisma.school.findUnique({ where: { id: targetSchoolId! } });
+            await sendInviteEmail(email, inviteUrl, school?.name || "Your School", token, 'STUDENT');
+        }
 
         return NextResponse.json({ student });
 

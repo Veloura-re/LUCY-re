@@ -67,11 +67,6 @@ export async function middleware(request: NextRequest) {
             url.pathname = '/dashboard'
             return NextResponse.redirect(url)
         }
-
-        if (isDashboardPage && metadataRole === 'SUPERADMIN') {
-            url.pathname = '/admin/dashboard'
-            return NextResponse.redirect(url)
-        }
     } else if (isAuthPage) {
         url.pathname = '/dashboard'
         return NextResponse.redirect(url)

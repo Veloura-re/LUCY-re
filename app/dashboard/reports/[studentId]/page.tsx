@@ -38,27 +38,25 @@ export default function StudentReportCardPage() {
     };
 
     return (
-        <div className="min-h-screen bg-black text-dm-textMain p-4 md:p-12 space-y-12 animate-in fade-in duration-700 max-w-5xl mx-auto print:p-0 print:m-0 print:bg-white print:text-black">
-            {/* Action Bar - Hidden in Print */}
-            <div className="flex justify-between items-center print:hidden">
-                <div className="flex items-center gap-3">
-                    <div className="p-3 bg-eduGreen-950/20 rounded-2xl border border-eduGreen-900/30">
-                        <GraduationCap className="w-6 h-6 text-eduGreen-500" />
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-black tracking-tight">Report Cycle</h1>
-                        <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">End of Term Synthesis</p>
-                    </div>
+        <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in duration-1000 relative z-10 py-12">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-zinc-900 pb-10 print:hidden">
+                <div>
+                    <h1 className="text-5xl font-black tracking-tighter text-white">
+                        Report <span className="text-eduGreen-500 italic">Cycle</span>
+                    </h1>
+                    <p className="text-zinc-600 font-bold uppercase tracking-[0.2em] text-xs mt-3">End of Term Scholastic Synthesis</p>
                 </div>
-                <div className="flex gap-4">
-                    <Button onClick={printReport} variant="outline" className="rounded-2xl border-zinc-900 bg-zinc-950/50 hover:border-eduGreen-500/30 transition-all h-12 px-6 text-[10px] font-black uppercase tracking-widest">
+
+                <div className="flex gap-4 mb-1">
+                    <Button onClick={printReport} variant="outline" className="rounded-2xl border-zinc-900 bg-zinc-950/50 hover:border-eduGreen-500/30 transition-all h-12 px-6 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white">
                         <Printer className="w-4 h-4 mr-2" /> Print PDF
                     </Button>
                 </div>
             </div>
 
             {/* Letterhead */}
-            <Card className="bg-zinc-950/40 backdrop-blur-md border-zinc-900 rounded-[3rem] overflow-hidden border-t-zinc-800/20 print:border-none print:shadow-none print:bg-transparent">
+            <Card className="bg-zinc-950/40 backdrop-blur-xl border-zinc-900/50 rounded-[3rem] overflow-hidden border-t-zinc-800/20 shadow-2xl print:border-none print:shadow-none print:bg-transparent">
                 <CardContent className="p-10">
                     <div className="flex flex-col md:flex-row justify-between items-start gap-8">
                         <div>
@@ -108,7 +106,7 @@ export default function StudentReportCardPage() {
                                     <div className="flex gap-8 items-center">
                                         <div className="text-right">
                                             <p className="text-[8px] font-black text-zinc-700 uppercase tracking-widest">Raw Score</p>
-                                            <p className="text-xl font-black text-dm-textMain print:text-black">{g.score}%</p>
+                                            <p className="text-xl font-black text-white print:text-black">{g.score}%</p>
                                         </div>
                                         <div className="w-12 h-12 bg-eduGreen-950/20 border border-eduGreen-900/30 rounded-xl flex items-center justify-center font-black text-eduGreen-500 print:border-zinc-300">
                                             {g.score >= 90 ? 'A' : g.score >= 80 ? 'B' : g.score >= 70 ? 'C' : 'D'}

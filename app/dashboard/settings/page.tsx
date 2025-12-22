@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { User, Shield, Bell, Zap, LogOut, Loader2 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import { SpringingLoader } from "@/components/dashboard/springing-loader";
 
 export default function SettingsPage() {
     const router = useRouter();
@@ -203,33 +204,29 @@ export default function SettingsPage() {
 
     if (loading) {
         return (
-            <div className="flex h-[400px] items-center justify-center">
-                <Loader2 className="w-10 h-10 text-eduGreen-500 animate-spin" />
+            <div className="min-h-[60vh] flex items-center justify-center">
+                <SpringingLoader message="Retrieving Institutional Configurations" />
             </div>
         );
     }
 
     return (
-        <div className="space-y-10 animate-in fade-in duration-700 relative z-10">
+        <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in duration-1000 relative z-10">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-zinc-900 pb-10">
                 <div>
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-eduGreen-950/20 border border-eduGreen-900/30 text-[10px] font-black text-eduGreen-500 uppercase tracking-widest mb-4">
-                        <Shield className="w-3 h-3 text-eduGreen-500" />
-                        <span>System Configuration</span>
-                    </div>
-                    <h1 className="text-4xl font-black text-white tracking-tight">System Settings</h1>
-                    <p className="text-zinc-500 mt-2 font-bold text-sm leading-relaxed max-w-2xl">
-                        Optimize your institutional experience and manage security protocols.
-                    </p>
+                    <h1 className="text-5xl font-black tracking-tighter text-white">
+                        System <span className="text-eduGreen-500 italic">Configuration</span>
+                    </h1>
+                    <p className="text-zinc-600 font-bold uppercase tracking-[0.2em] text-xs mt-3">Advanced Institutional Protocols</p>
                 </div>
 
                 <Button
                     onClick={handleSave}
                     isLoading={saving}
-                    className="bg-eduGreen-600 hover:bg-eduGreen-500 text-white h-14 px-10 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-eduGreen-900/20 transition-all active:scale-95"
+                    className="bg-eduGreen-600 hover:bg-eduGreen-500 text-white h-14 px-10 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-eduGreen-900/20 transition-all active:scale-95 mb-1"
                 >
-                    {saving ? "Synchronizing..." : "Save Changes"}
+                    {saving ? "Synchronizing..." : "Commit Protocol"}
                 </Button>
             </div>
 
@@ -267,7 +264,7 @@ export default function SettingsPage() {
                 {/* Settings Form */}
                 <div className="lg:col-span-9 space-y-8">
                     {activeTab === 'profile' && (
-                        <Card className="bg-zinc-950/50 backdrop-blur-2xl border-zinc-900 rounded-[2.5rem] overflow-hidden border-t-zinc-800/20 shadow-2xl">
+                        <Card className="bg-zinc-950/40 backdrop-blur-xl border-zinc-900/50 hover:border-eduGreen-900/30 transition-all rounded-[2.5rem] overflow-hidden group shadow-2xl border-t-zinc-800/20">
                             <CardHeader className="p-8 pb-4">
                                 <CardTitle className="text-2xl font-black text-zinc-100 tracking-tight leading-tight">Identity Matrix</CardTitle>
                                 <CardDescription className="text-zinc-600 font-bold uppercase tracking-widest text-[9px] mt-1">Global administrative parameters</CardDescription>
@@ -318,7 +315,7 @@ export default function SettingsPage() {
                     )}
 
                     {activeTab === 'security' && (
-                        <Card className="bg-zinc-950/50 backdrop-blur-2xl border-zinc-900 rounded-[2.5rem] overflow-hidden border-t-zinc-800/20 shadow-2xl">
+                        <Card className="bg-zinc-950/40 backdrop-blur-xl border-zinc-900/50 hover:border-eduGreen-900/30 transition-all rounded-[2.5rem] overflow-hidden group shadow-2xl border-t-zinc-800/20">
                             <CardHeader className="p-8 pb-4">
                                 <CardTitle className="text-2xl font-black text-zinc-100 tracking-tight leading-tight">Security Layer</CardTitle>
                                 <CardDescription className="text-zinc-600 font-bold uppercase tracking-widest text-[9px] mt-1">Encryption and access protocols</CardDescription>
@@ -379,7 +376,7 @@ export default function SettingsPage() {
                     )}
 
                     {activeTab === 'notifications' && (
-                        <Card className="bg-zinc-950/50 backdrop-blur-2xl border-zinc-900 rounded-[2.5rem] overflow-hidden border-t-zinc-800/20 shadow-2xl">
+                        <Card className="bg-zinc-950/40 backdrop-blur-xl border-zinc-900/50 hover:border-eduGreen-900/30 transition-all rounded-[2.5rem] overflow-hidden group shadow-2xl border-t-zinc-800/20">
                             <CardHeader className="p-8 pb-4">
                                 <CardTitle className="text-2xl font-black text-zinc-100 tracking-tight leading-tight">Signal Feed</CardTitle>
                                 <CardDescription className="text-zinc-600 font-bold uppercase tracking-widest text-[9px] mt-1">Communication and alert preferences</CardDescription>
@@ -409,7 +406,7 @@ export default function SettingsPage() {
 
                     {activeTab === 'school' && (
                         <div className="space-y-8">
-                            <Card className="bg-zinc-950/50 backdrop-blur-2xl border-zinc-900 rounded-[2.5rem] overflow-hidden border-t-zinc-800/20 shadow-2xl">
+                            <Card className="bg-zinc-950/40 backdrop-blur-xl border-zinc-900/50 hover:border-eduGreen-900/30 transition-all rounded-[2.5rem] overflow-hidden group shadow-2xl border-t-zinc-800/20">
                                 <CardHeader className="p-8 pb-4">
                                     <div className="flex items-center gap-3 mb-2">
                                         <Zap className="w-4 h-4 text-eduGreen-500" />

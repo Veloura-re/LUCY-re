@@ -18,6 +18,8 @@ export const metadata: Metadata = {
   description: "Advanced School Management Platform",
 };
 
+import { Toaster } from "sonner";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -29,6 +31,7 @@ export default function RootLayout({
         className={`${inter.variable} ${poppins.variable} antialiased`}
       >
         {children}
+        <Toaster position="top-right" theme="dark" closeButton richColors />
       </body>
     </html>
   );

@@ -89,21 +89,17 @@ export default function StudentsPage() {
     }
 
     return (
-        <div className="space-y-10 animate-in fade-in duration-700 relative z-10">
+        <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in duration-1000 relative z-10">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-zinc-900 pb-10">
                 <div>
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-eduGreen-950/20 border border-eduGreen-900/30 text-[10px] font-black text-eduGreen-500 uppercase tracking-widest mb-4">
-                        <GraduationCap className="w-3 h-3 text-eduGreen-500" />
-                        <span>Academic Registry</span>
-                    </div>
-                    <h1 className="text-4xl font-black text-white tracking-tight">Student Body</h1>
-                    <p className="text-zinc-500 mt-2 font-bold text-sm leading-relaxed max-w-2xl">
-                        Manage student enrollments, academic records, and organizational placement across disciplines.
-                    </p>
+                    <h1 className="text-5xl font-black tracking-tighter text-white">
+                        Academic <span className="text-eduGreen-500 italic">Registry</span>
+                    </h1>
+                    <p className="text-zinc-600 font-bold uppercase tracking-[0.2em] text-xs mt-3">Institutional Student Body & Enrollment</p>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 mb-1">
                     <Button variant="outline" className="rounded-2xl border-zinc-900 bg-zinc-950/50 hover:border-zinc-700 transition-all h-14 px-6 font-bold text-[10px] uppercase tracking-widest text-zinc-500 hover:text-white">
                         <FileDown className="mr-2 h-4 w-4" /> Export CSV
                     </Button>
@@ -119,7 +115,7 @@ export default function StudentsPage() {
 
             {isAdding && (
                 <div className="animate-in fade-in slide-in-from-top-4 duration-500">
-                    <Card className="bg-zinc-950/50 backdrop-blur-2xl border-zinc-800/80 rounded-[2.5rem] overflow-hidden border-t-zinc-700/30">
+                    <Card className="bg-zinc-950/40 backdrop-blur-xl border-zinc-900/50 rounded-[2.5rem] overflow-hidden border-t-zinc-800/20 shadow-2xl">
                         <CardHeader className="pt-10 pb-6 px-10 border-b border-zinc-900/50">
                             <CardTitle className="text-xl font-black text-white tracking-tight">Enrollment Console</CardTitle>
                             <CardDescription className="text-zinc-600 font-bold uppercase tracking-widest text-[9px] mt-1">Add new student to institutional registry</CardDescription>
@@ -197,18 +193,20 @@ export default function StudentsPage() {
                 </div>
             )}
 
-            <Card className="bg-zinc-900/40 backdrop-blur-md border-zinc-800/80 shadow-2xl rounded-[2.5rem] overflow-hidden border-t-zinc-700/30">
-                <CardHeader className="p-8 border-b border-zinc-900/80 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <Card className="bg-zinc-950/40 backdrop-blur-xl border-zinc-900/50 rounded-[2.5rem] overflow-hidden border-t-zinc-800/20 shadow-2xl">
+                <CardHeader className="p-10 border-b border-zinc-900/80 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div>
-                        <CardTitle className="text-xl font-black text-white tracking-tight">Student Directory</CardTitle>
-                        <CardDescription className="text-zinc-600 font-bold uppercase tracking-widest text-[9px] mt-1">Registered Institutional Learners</CardDescription>
+                        <CardTitle className="text-2xl font-black text-white tracking-tight leading-tight">Student Directory</CardTitle>
+                        <p className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em] mt-1">Registered Institutional Learners</p>
                     </div>
-                    <div className="relative max-w-sm w-full">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-700" />
-                        <Input
-                            placeholder="System query..."
-                            className="pl-12 w-full bg-zinc-950/50 border-zinc-900 text-white placeholder:text-zinc-800 focus:border-eduGreen-900/50 h-12 rounded-xl transition-all border-2 font-bold text-sm tracking-tight"
-                        />
+                    <div className="flex bg-zinc-950 p-1.5 rounded-2xl border border-zinc-900 shadow-2xl w-full md:w-80">
+                        <div className="relative w-full">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-700" />
+                            <Input
+                                placeholder="System query..."
+                                className="pl-12 w-full bg-transparent border-0 text-white placeholder:text-zinc-800 h-11 transition-all font-bold text-sm tracking-tight focus-visible:ring-0"
+                            />
+                        </div>
                     </div>
                 </CardHeader>
                 <CardContent className="p-0">

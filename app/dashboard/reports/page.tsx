@@ -37,25 +37,21 @@ export default function ReportsPage() {
     }
 
     return (
-        <div className="space-y-12 animate-in fade-in duration-1000">
+        <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in duration-1000 relative z-10">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-zinc-900 pb-10">
                 <div>
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-eduGreen-950/20 border border-eduGreen-900/30 text-[10px] font-black text-eduGreen-500 uppercase tracking-widest mb-4">
-                        <Activity className="w-3 h-3 text-eduGreen-500" />
-                        <span>Intelligence Matrix</span>
-                    </div>
-                    <h1 className="text-4xl font-black text-dm-textMain tracking-tight italic">Predictive <span className="text-zinc-700 not-italic ml-2">Analytics</span></h1>
-                    <p className="text-zinc-500 mt-2 font-bold text-sm leading-relaxed max-w-2xl uppercase tracking-wider">
-                        Real-time synthesis of academic performance and institutional velocity.
-                    </p>
+                    <h1 className="text-5xl font-black tracking-tighter text-white">
+                        Predictive <span className="text-eduGreen-500 italic">Analytics</span>
+                    </h1>
+                    <p className="text-zinc-600 font-bold uppercase tracking-[0.2em] text-xs mt-3">Institutional Intelligence & Performance Synthesis</p>
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 mb-2">
                     <Button variant="outline" className="rounded-2xl border-zinc-900 bg-zinc-950/50 hover:border-eduGreen-500/30 transition-all h-12 px-6 text-[10px] font-black uppercase tracking-widest text-zinc-500">
                         <Filter className="w-4 h-4 mr-2" /> Filter Stream
                     </Button>
-                    <Button className="bg-eduGreen-600 text-dm-textMain hover:bg-eduGreen-500 h-12 px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-2xl transition-all active:scale-95">
+                    <Button className="bg-eduGreen-600 text-white hover:bg-eduGreen-500 h-12 px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-2xl transition-all active:scale-95 shadow-eduGreen-900/20">
                         <Download className="w-4 h-4 mr-2" /> Export Core
                     </Button>
                 </div>
@@ -64,7 +60,7 @@ export default function ReportsPage() {
             {/* Quick Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Link href="/dashboard/reports/attendance" className="block group">
-                    <Card className="bg-zinc-950/40 backdrop-blur-md border-zinc-900 rounded-[2.5rem] overflow-hidden group-hover:border-eduGreen-900/50 transition-all">
+                    <Card className="bg-zinc-950/40 backdrop-blur-xl border-zinc-900 rounded-[2.5rem] overflow-hidden group-hover:border-eduGreen-900/50 transition-all border-t-zinc-800/20 shadow-2xl">
                         <CardContent className="p-8">
                             <div className="flex justify-between items-start mb-4">
                                 <div className="p-3 bg-zinc-900 rounded-2xl border border-zinc-800 group-hover:border-eduGreen-900/30 transition-all">
@@ -72,7 +68,7 @@ export default function ReportsPage() {
                                 </div>
                                 <span className="text-[10px] font-black text-eduGreen-600 bg-eduGreen-950/20 px-2 py-1 rounded-full">+1.4%</span>
                             </div>
-                            <div className="text-4xl font-black text-dm-textMain mb-1 tracking-tighter">{data.summary?.avgAttendance || "100%"}</div>
+                            <div className="text-4xl font-black text-white mb-1 tracking-tighter">{data.summary?.avgAttendance || "100%"}</div>
                             <p className="text-[10px] text-zinc-600 font-black uppercase tracking-widest flex items-center justify-between">
                                 Attendance Velocity
                                 <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
@@ -89,7 +85,7 @@ export default function ReportsPage() {
                             </div>
                             <span className="text-[10px] font-black text-eduGreen-600 bg-eduGreen-950/20 px-2 py-1 rounded-full">On Track</span>
                         </div>
-                        <div className="text-4xl font-black text-dm-textMain mb-1 tracking-tighter">{data.summary?.examCompletion || "0%"}</div>
+                        <div className="text-4xl font-black text-white mb-1 tracking-tighter">{data.summary?.examCompletion || "0%"}</div>
                         <p className="text-[10px] text-zinc-600 font-black uppercase tracking-widest">Syllabus Saturation</p>
                     </CardContent>
                 </Card>
@@ -102,7 +98,7 @@ export default function ReportsPage() {
                             </div>
                             <span className="text-[10px] font-black text-eduGreen-600 bg-eduGreen-950/20 px-2 py-1 rounded-full">Steady</span>
                         </div>
-                        <div className="text-4xl font-black text-dm-textMain mb-1 tracking-tighter">{data.summary?.activeNodes || "0"}</div>
+                        <div className="text-4xl font-black text-white mb-1 tracking-tighter">{data.summary?.activeNodes || "0"}</div>
                         <p className="text-[10px] text-zinc-600 font-black uppercase tracking-widest">Active Nodes</p>
                     </CardContent>
                 </Card>
@@ -110,9 +106,9 @@ export default function ReportsPage() {
 
             <div className="grid lg:grid-cols-12 gap-8">
                 {/* Performance by Subject */}
-                <Card className="lg:col-span-8 bg-zinc-950/40 backdrop-blur-md border-zinc-900 rounded-[3rem] overflow-hidden border-t-zinc-800/20">
+                <Card className="lg:col-span-8 bg-zinc-950/40 backdrop-blur-xl border-zinc-900 rounded-[3rem] overflow-hidden border-t-zinc-800/20 shadow-2xl">
                     <CardHeader className="p-10 border-b border-zinc-900/50">
-                        <CardTitle className="text-2xl font-black text-dm-textMain tracking-tight">Academic Performance Index</CardTitle>
+                        <CardTitle className="text-2xl font-black text-white tracking-tight">Academic Performance Index</CardTitle>
                         <CardDescription className="text-zinc-600 font-bold uppercase tracking-widest text-[9px] mt-1">Mean subject progression metrics</CardDescription>
                     </CardHeader>
                     <CardContent className="p-10">
@@ -121,7 +117,7 @@ export default function ReportsPage() {
                                 <div key={i} className="space-y-3">
                                     <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
                                         <span className="text-zinc-400">{s.name}</span>
-                                        <span className="text-dm-textMain">{s.avg?.toFixed(1) || 0}%</span>
+                                        <span className="text-white">{s.avg?.toFixed(1) || 0}%</span>
                                     </div>
                                     <div className="h-3 w-full bg-zinc-900 rounded-full overflow-hidden p-0.5 border border-zinc-800">
                                         <div
@@ -136,9 +132,9 @@ export default function ReportsPage() {
                 </Card>
 
                 {/* Faculty Load */}
-                <Card className="lg:col-span-4 bg-zinc-950/40 backdrop-blur-md border-zinc-900 rounded-[3rem] overflow-hidden border-t-zinc-800/20">
+                <Card className="lg:col-span-4 bg-zinc-950/40 backdrop-blur-xl border-zinc-900 rounded-[3rem] overflow-hidden border-t-zinc-800/20 shadow-2xl">
                     <CardHeader className="p-8 border-b border-zinc-900/50">
-                        <CardTitle className="text-lg font-black text-dm-textMain tracking-tight uppercase tracking-widest text-[10px]">Faculty Overload Pulse</CardTitle>
+                        <CardTitle className="text-lg font-black text-white tracking-tight uppercase tracking-widest text-[10px]">Faculty Overload Pulse</CardTitle>
                     </CardHeader>
                     <CardContent className="p-6">
                         <div className="space-y-4">

@@ -96,7 +96,7 @@ export async function POST(request: Request) {
 
         // Send invite email
         const { sendInviteEmail } = await import('@/lib/email');
-        const emailResult = await sendInviteEmail(directorEmail, inviteUrl, name, result.token);
+        const emailResult = await sendInviteEmail(directorEmail, inviteUrl, name, result.token, 'PRINCIPAL');
 
         return NextResponse.json({
             school: result.school,

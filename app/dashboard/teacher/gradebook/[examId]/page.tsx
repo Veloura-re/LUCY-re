@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function GradebookPage() {
     const params = useParams();
@@ -170,20 +171,26 @@ export default function GradebookPage() {
                                         <div className="text-[10px] text-zinc-500 font-mono tracking-tighter uppercase">{student.studentCode}</div>
                                     </div>
                                     <div className="col-span-4 flex flex-col items-center gap-2">
-                                        <select
-                                            disabled={isLocked}
-                                            value={currentStatus}
-                                            onChange={(e) => setAttendance({ ...attendance, [student.id]: e.target.value })}
-                                            className={cn(
-                                                "w-40 bg-transparent border-2 rounded-xl h-10 px-3 text-[10px] font-black uppercase tracking-widest transition-all outline-none",
-                                                currentStatus === 'PRESENT' ? "border-eduGreen-900/30 text-eduGreen-500" :
-                                                    currentStatus === 'ABSENT' ? "border-red-900/30 text-red-500" : "border-amber-900/30 text-amber-500"
-                                            )}
-                                        >
-                                            <option value="PRESENT" className="bg-zinc-950 text-white">Present</option>
-                                            <option value="ABSENT" className="bg-zinc-950 text-white">Absent</option>
-                                            <option value="EXCUSED" className="bg-zinc-950 text-white">Excused</option>
-                                        </select>
+                                        <div className="w-40">
+                                            <Select
+                                                disabled={isLocked}
+                                                value={currentStatus}
+                                                onValueChange={(val: string) => setAttendance({ ...attendance, [student.id]: val })}
+                                            >
+                                                <SelectTrigger className={cn(
+                                                    "h-10 border-2",
+                                                    currentStatus === 'PRESENT' ? "border-eduGreen-900/30 text-eduGreen-500" :
+                                                        currentStatus === 'ABSENT' ? "border-red-900/30 text-red-500" : "border-amber-900/30 text-amber-500"
+                                                )}>
+                                                    <SelectValue placeholder="Status" />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-zinc-950 border-zinc-900">
+                                                    <SelectItem value="PRESENT">Present</SelectItem>
+                                                    <SelectItem value="ABSENT">Absent</SelectItem>
+                                                    <SelectItem value="EXCUSED">Excused</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
                                         {(isAbsent || isExcused) && (
                                             <input
                                                 disabled={isLocked}
@@ -213,16 +220,20 @@ export default function GradebookPage() {
                                         </div>
                                         {!isAbsent && (
                                             <div className="flex flex-col gap-2 w-full max-w-[200px]">
-                                                <select
+                                                <Select
                                                     disabled={isLocked}
                                                     value={statuses[student.id] || "SUBMITTED"}
-                                                    onChange={(e) => setStatuses({ ...statuses, [student.id]: e.target.value })}
-                                                    className="w-full bg-zinc-950/50 border border-zinc-900 rounded-lg h-8 px-2 text-[8px] font-black uppercase tracking-widest text-zinc-400 outline-none"
+                                                    onValueChange={(val: string) => setStatuses({ ...statuses, [student.id]: val })}
                                                 >
-                                                    <option value="SUBMITTED">Submitted</option>
-                                                    <option value="REVIEWED">Reviewed</option>
-                                                    <option value="REMARK_REQUESTED">Needs Remark</option>
-                                                </select>
+                                                    <SelectTrigger className="h-9 border-zinc-900 bg-zinc-950/50 text-[8px]">
+                                                        <SelectValue placeholder="Processing Status" />
+                                                    </SelectTrigger>
+                                                    <SelectContent className="bg-zinc-950 border-zinc-900">
+                                                        <SelectItem value="SUBMITTED">Submitted</SelectItem>
+                                                        <SelectItem value="REVIEWED">Reviewed</SelectItem>
+                                                        <SelectItem value="REMARK_REQUESTED">Needs Remark</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
                                                 <Input
                                                     disabled={isLocked}
                                                     placeholder="Teacher's remark..."

@@ -49,14 +49,6 @@ export default async function DashboardPage() {
 
     if (!dbUser) return <div>User not found</div>;
 
-    // Sync role to Supabase metadata if it's missing or wrong
-    // This prevents infinite refresh loops between page redirects and middleware protection
-    if (user.user_metadata?.role !== dbUser.role) {
-        await supabase.auth.updateUser({
-            data: { role: dbUser.role }
-        });
-    }
-
     // SUPERADMIN should ONLY access /admin/dashboard
     if (dbUser.role === 'SUPERADMIN') {
         redirect('/admin/dashboard');

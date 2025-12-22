@@ -174,21 +174,21 @@ export default function TimetableManagementPage() {
     if (loading) return <div className="p-12 text-zinc-500 font-bold uppercase tracking-widest animate-pulse">Synchronizing Clockwork...</div>;
 
     return (
-        <div className="space-y-10 animate-in fade-in duration-700">
+        <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in duration-1000 relative z-10">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-zinc-900 pb-10">
                 <div>
-                    <h2 className="text-4xl font-black tracking-tight text-dm-textMain italic">
-                        School <span className="text-zinc-700 not-italic ml-2">Clockwork</span>
-                    </h2>
-                    <p className="text-eduGreen-500 font-bold text-sm mt-1 uppercase tracking-widest">Global Period & Timetable Authority</p>
+                    <h1 className="text-5xl font-black tracking-tighter text-white">
+                        Academic <span className="text-eduGreen-500 italic">Clockwork</span>
+                    </h1>
+                    <p className="text-zinc-600 font-bold uppercase tracking-[0.2em] text-xs mt-3">Institutional Period & Day Structure Authority</p>
                 </div>
             </div>
 
             <Tabs defaultValue="builder" className="space-y-8" onValueChange={setActiveTab}>
-                <TabsList className="bg-zinc-950/50 border border-zinc-900 p-1.5 rounded-2xl h-16">
-                    <TabsTrigger value="builder" className="rounded-xl px-8 font-black uppercase tracking-widest text-[10px] data-[state=active]:bg-eduGreen-600 data-[state=active]:text-dm-textMain">Timetable Builder</TabsTrigger>
-                    <TabsTrigger value="periods" className="rounded-xl px-8 font-black uppercase tracking-widest text-[10px] data-[state=active]:bg-eduGreen-600 data-[state=active]:text-dm-textMain">Day Structure</TabsTrigger>
+                <TabsList className="bg-zinc-950/40 backdrop-blur-xl border border-zinc-900/50 p-1.5 rounded-2xl h-16">
+                    <TabsTrigger value="builder" className="rounded-xl px-8 font-black uppercase tracking-widest text-[10px] data-[state=active]:bg-eduGreen-600 data-[state=active]:text-white">Timetable Builder</TabsTrigger>
+                    <TabsTrigger value="periods" className="rounded-xl px-8 font-black uppercase tracking-widest text-[10px] data-[state=active]:bg-eduGreen-600 data-[state=active]:text-white">Day Structure</TabsTrigger>
                 </TabsList>
 
                 {/* --- Timetable Builder --- */}
@@ -198,12 +198,12 @@ export default function TimetableManagementPage() {
                             <div className="space-y-3 w-72">
                                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 ml-1">Class Cohort</label>
                                 <Select value={selectedClassId} onValueChange={setSelectedClassId}>
-                                    <SelectTrigger className="h-14 bg-zinc-950/50 border-2 border-zinc-900 rounded-xl text-dm-textMain font-bold">
+                                    <SelectTrigger className="h-14 bg-zinc-950/50 border-2 border-zinc-900 rounded-xl text-white font-bold">
                                         <SelectValue placeholder="Select Class" />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-zinc-950 border-zinc-900">
+                                    <SelectContent className="bg-zinc-950 border-zinc-900 text-white">
                                         {classes.map((cls) => (
-                                            <SelectItem key={cls.id} value={cls.id} className="text-zinc-400 focus:text-dm-textMain">
+                                            <SelectItem key={cls.id} value={cls.id} className="text-zinc-400 focus:text-white focus:bg-eduGreen-900/20">
                                                 {cls.name} ({cls.gradeName})
                                             </SelectItem>
                                         ))}
@@ -233,7 +233,7 @@ export default function TimetableManagementPage() {
                                 {periods.map(period => (
                                     <tr key={period.id} className="group/row hover:bg-zinc-900/10 transition-colors">
                                         <td className="p-6 border-r border-zinc-900 bg-zinc-950/20">
-                                            <div className="font-black text-dm-textMain text-lg tracking-tight leading-none mb-1">{period.name}</div>
+                                            <div className="font-black text-white text-lg tracking-tight leading-none mb-1">{period.name}</div>
                                             <div className="flex items-center gap-1.5 text-zinc-700 font-bold text-[9px] uppercase tracking-tighter">
                                                 <Clock className="w-3 h-3" /> {period.startTime} - {period.endTime}
                                             </div>
@@ -277,17 +277,17 @@ export default function TimetableManagementPage() {
 
                 {/* --- Period Structure --- */}
                 <TabsContent value="periods" className="animate-in slide-in-from-bottom-4">
-                    <Card className="bg-zinc-900/30 backdrop-blur-md border-zinc-900/80 rounded-[2.5rem] overflow-hidden">
-                        <CardHeader className="p-8 border-b border-zinc-900/50 flex flex-row items-center justify-between">
+                    <Card className="bg-zinc-950/40 backdrop-blur-xl border-zinc-900/50 rounded-[2.5rem] overflow-hidden border-t-zinc-800/20 shadow-2xl">
+                        <CardHeader className="p-10 border-b border-zinc-900/80 flex flex-row items-center justify-between">
                             <div>
-                                <CardTitle className="text-xl font-black text-dm-textMain tracking-tight">Day Sequence</CardTitle>
-                                <CardDescription className="text-zinc-600 font-bold uppercase tracking-widest text-[9px] mt-1">Configure global teaching slots</CardDescription>
+                                <CardTitle className="text-2xl font-black text-white tracking-tight leading-tight">Day Sequence</CardTitle>
+                                <p className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em] mt-1">Configure global teaching slots</p>
                             </div>
                             <div className="flex gap-4">
-                                <Button onClick={addPeriod} variant="outline" className="border-2 border-zinc-900 bg-transparent text-zinc-400 hover:text-dm-textMain hover:bg-zinc-950 rounded-xl h-12 font-black uppercase text-[10px] tracking-widest">
+                                <Button onClick={addPeriod} variant="outline" className="border-zinc-900 bg-zinc-950/50 text-zinc-500 hover:text-white rounded-2xl h-12 px-6 font-black uppercase text-[10px] tracking-widest transition-all">
                                     <Plus className="w-4 h-4 mr-2" /> Add Slot
                                 </Button>
-                                <Button onClick={handleSavePeriods} className="bg-eduGreen-600 hover:bg-eduGreen-500 text-dm-textMain h-12 px-6 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-eduGreen-900/20">
+                                <Button onClick={handleSavePeriods} className="bg-eduGreen-600 hover:bg-eduGreen-500 text-white h-12 px-8 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-2xl transition-all shadow-eduGreen-900/20">
                                     <Save className="w-4 h-4 mr-2" /> Seal Structure
                                 </Button>
                             </div>
@@ -307,7 +307,7 @@ export default function TimetableManagementPage() {
                                                         newP[idx].name = e.target.value;
                                                         setPeriods(newP);
                                                     }}
-                                                    className="h-12 bg-zinc-900 border-0 rounded-xl text-dm-textMain font-bold placeholder:text-zinc-800"
+                                                    className="h-12 bg-zinc-900 border-0 rounded-xl text-white font-bold placeholder:text-zinc-800"
                                                 />
                                             </div>
                                             <div className="space-y-2">
@@ -320,7 +320,7 @@ export default function TimetableManagementPage() {
                                                         newP[idx].startTime = e.target.value;
                                                         setPeriods(newP);
                                                     }}
-                                                    className="h-12 bg-zinc-900 border-0 rounded-xl text-dm-textMain font-mono font-bold"
+                                                    className="h-12 bg-zinc-900 border-0 rounded-xl text-white font-mono font-bold"
                                                 />
                                             </div>
                                             <div className="space-y-2">
@@ -333,7 +333,7 @@ export default function TimetableManagementPage() {
                                                         newP[idx].endTime = e.target.value;
                                                         setPeriods(newP);
                                                     }}
-                                                    className="h-12 bg-zinc-900 border-0 rounded-xl text-dm-textMain font-mono font-bold"
+                                                    className="h-12 bg-zinc-900 border-0 rounded-xl text-white font-mono font-bold"
                                                 />
                                             </div>
                                             <div className="flex items-center gap-4 pt-6">
@@ -386,7 +386,7 @@ function SlotAssigner({ subjects, teachers, staffing, onAssign }: any) {
         <div className="bg-zinc-950 p-4 rounded-2xl border-2 border-eduGreen-900/30 shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="space-y-3">
                 <Select value={subId} onValueChange={setSubId}>
-                    <SelectTrigger className="h-10 bg-zinc-900 border-0 rounded-lg text-dm-textMain font-bold text-[10px] uppercase tracking-widest">
+                    <SelectTrigger className="h-10 bg-zinc-900 border-0 rounded-lg text-white font-bold text-[10px] uppercase tracking-widest">
                         <SelectValue placeholder="Subject" />
                     </SelectTrigger>
                     <SelectContent>
@@ -397,7 +397,7 @@ function SlotAssigner({ subjects, teachers, staffing, onAssign }: any) {
                 </Select>
 
                 <Select value={teacherId} onValueChange={setTeacherId}>
-                    <SelectTrigger className="h-10 bg-zinc-900 border-0 rounded-lg text-dm-textMain font-bold text-[10px] uppercase tracking-widest">
+                    <SelectTrigger className="h-10 bg-zinc-900 border-0 rounded-lg text-white font-bold text-[10px] uppercase tracking-widest">
                         <SelectValue placeholder="Teacher" />
                     </SelectTrigger>
                     <SelectContent>
@@ -414,7 +414,7 @@ function SlotAssigner({ subjects, teachers, staffing, onAssign }: any) {
                             onAssign({ subjectId: subId, teacherId });
                             setOpen(false);
                         }}
-                        className="flex-1 bg-eduGreen-600 text-dm-textMain text-[9px] font-black uppercase tracking-widest rounded-lg h-9"
+                        className="flex-1 bg-eduGreen-600 text-white text-[9px] font-black uppercase tracking-widest rounded-lg h-9"
                     >
                         Save
                     </Button>

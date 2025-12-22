@@ -154,25 +154,21 @@ export default function ClassesPage() {
     }
 
     return (
-        <div className="space-y-10 animate-in fade-in duration-700 relative z-10">
+        <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in duration-1000 relative z-10">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-zinc-900 pb-10">
                 <div>
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-eduGreen-950/20 border border-eduGreen-900/30 text-[10px] font-black text-eduGreen-500 uppercase tracking-widest mb-4">
-                        <Layers className="w-3 h-3 text-eduGreen-500" />
-                        <span>Curriculum Engine</span>
-                    </div>
-                    <h1 className="text-4xl font-black text-white tracking-tight">Institutional Architecture</h1>
-                    <p className="text-zinc-500 mt-2 font-bold text-sm leading-relaxed max-w-2xl">
-                        Define grade levels, organize class cohorts, and manage the academic subject directory.
-                    </p>
+                    <h1 className="text-5xl font-black tracking-tighter text-white">
+                        Academic <span className="text-eduGreen-500 italic">Architecture</span>
+                    </h1>
+                    <p className="text-zinc-600 font-bold uppercase tracking-[0.2em] text-xs mt-3">Institutional Cohorts & Curriculum Registry</p>
                 </div>
             </div>
 
-            <div className="grid lg:grid-cols-12 gap-8 items-start">
+            <div className="grid lg:grid-cols-1 gap-12 items-start">
                 {/* Grade Levels Section */}
-                <div className="lg:col-span-8 space-y-8">
-                    <Card className="bg-zinc-900/40 backdrop-blur-md border-zinc-800/80 shadow-2xl rounded-[2.5rem] overflow-hidden border-t-zinc-700/30">
+                <div className="space-y-8">
+                    <Card className="bg-zinc-950/40 backdrop-blur-xl border-zinc-900/50 rounded-[2.5rem] overflow-hidden border-t-zinc-800/20 shadow-2xl">
                         <CardHeader className="p-10 border-b border-zinc-900/80 flex flex-row items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-eduGreen-950/20 rounded-2xl border border-eduGreen-900/30">
@@ -341,8 +337,8 @@ export default function ClassesPage() {
                 </div>
 
                 {/* Subjects Section */}
-                <div className="lg:col-span-4 space-y-8">
-                    <Card className="bg-zinc-900/40 backdrop-blur-md border-zinc-800/80 shadow-2xl rounded-[2.5rem] overflow-hidden border-t-zinc-700/30">
+                <div className="space-y-8">
+                    <Card className="bg-zinc-950/40 backdrop-blur-xl border-zinc-900/50 rounded-[2.5rem] overflow-hidden border-t-zinc-800/20 shadow-2xl">
                         <CardHeader className="p-8 border-b border-zinc-900/80">
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-3">

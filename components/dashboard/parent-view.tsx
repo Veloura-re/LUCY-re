@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { SpringingLoader } from "@/components/dashboard/springing-loader";
 
-// Interface for the student data returned by API verification
 interface VerifiedStudent {
     id: string;
     firstName: string;
@@ -32,9 +31,8 @@ export function ParentView({ user, childrenData: initialChildren }: { user: any,
     useEffect(() => {
         if (!initialChildren) {
             fetchStudents();
-        } else {
-            // If they are provided, we should check if they are empty and set isAdding
-            if (initialChildren.length === 0) setIsAdding(true);
+        } else if (initialChildren.length === 0) {
+            setIsAdding(true);
         }
     }, [initialChildren]);
 
@@ -57,21 +55,16 @@ export function ParentView({ user, childrenData: initialChildren }: { user: any,
     const verifyCode = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!code) return;
-
         setStatus('VERIFYING');
         setError(null);
-
         try {
             const res = await fetch('/api/parent/link-student', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ studentCode: code, confirm: false })
             });
-
             const data = await res.json();
-
             if (!res.ok) throw new Error(data.error || "Failed to verify code");
-
             setFoundStudent(data.student);
             setStatus('CONFIRMING');
         } catch (err: any) {
@@ -82,7 +75,6 @@ export function ParentView({ user, childrenData: initialChildren }: { user: any,
 
     const confirmLink = async () => {
         if (!foundStudent) return;
-
         setStatus('LINKING');
         try {
             const res = await fetch('/api/parent/link-student', {
@@ -90,12 +82,10 @@ export function ParentView({ user, childrenData: initialChildren }: { user: any,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ studentCode: code, confirm: true })
             });
-
             if (!res.ok) {
                 const data = await res.json();
                 throw new Error(data.error || "Failed to link");
             }
-
             setStatus('SUCCESS');
             setTimeout(() => {
                 router.refresh();
@@ -104,70 +94,68 @@ export function ParentView({ user, childrenData: initialChildren }: { user: any,
                 setStatus('IDLE');
                 setFoundStudent(null);
             }, 2000);
-
         } catch (err: any) {
             setError(err.message);
-            setStatus('CONFIRMING'); // Go back to confirm state so they can retry or cancel
+            setStatus('CONFIRMING');
         }
     };
 
     return (
-        <div className="space-y-10 animate-in fade-in duration-700 relative z-10">
+        <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in duration-1000 relative z-10">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-zinc-900 pb-10">
                 <div>
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-eduGreen-950/20 border border-eduGreen-900/30 text-[10px] font-black text-eduGreen-500 uppercase tracking-widest mb-4">
-                        <Sparkles className="w-3 h-3 text-eduGreen-500" />
-                        <span>Guardian Link</span>
-                    </div>
-                    <h1 className="text-4xl font-black text-dm-textMain tracking-tight">Family Portal</h1>
-                    <p className="text-zinc-500 mt-2 font-bold text-sm leading-relaxed max-w-2xl">
-                        Monitor academic progression cycles, institutional communications, and performance benchmarks for your students.
-                    </p>
+                    <h1 className="text-5xl font-black tracking-tighter text-white">
+                        Family <span className="text-eduGreen-500 italic">Portal</span>
+                    </h1>
+                    <p className="text-zinc-600 font-bold uppercase tracking-[0.2em] text-xs mt-3">Guardian Link & Scholastic Monitoring Nexus</p>
                 </div>
 
                 {students.length > 0 && !isAdding && (
-                    <Button
-                        onClick={() => setIsAdding(true)}
-                        className="bg-eduGreen-600 hover:bg-eduGreen-500 text-white h-14 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-eduGreen-900/20 transition-all active:scale-95"
-                    >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Link Student
-                    </Button>
+                    <div className="flex items-center gap-3 mb-1">
+                        <Button
+                            onClick={() => setIsAdding(true)}
+                            className="bg-eduGreen-600 hover:bg-eduGreen-500 text-white h-14 px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-2xl transition-all active:scale-95 shadow-eduGreen-900/20"
+                        >
+                            <Plus className="mr-2 h-4 w-4" /> Link Student
+                        </Button>
+                    </div>
                 )}
             </div>
 
             {/* Loading State */}
             {loadingStudents ? (
-                <div className="min-h-[60vh] flex flex-col items-center justify-center py-20">
-                    <SpringingLoader message="Synchronizing Student Data" />
+                <div className="min-h-[60vh] flex flex-col items-center justify-center">
+                    <SpringingLoader message="Synchronizing Family Terminal" />
                 </div>
             ) : isAdding ? (
                 <div className="max-w-2xl mx-auto py-12">
-                    <Card className="relative bg-zinc-950/50 backdrop-blur-2xl border-zinc-900 rounded-[3rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.8)] border-t-zinc-800/20">
+                    <Card className="relative bg-zinc-950/40 backdrop-blur-xl border-zinc-900/50 rounded-[3rem] overflow-hidden shadow-2xl border-t-zinc-800/20">
                         <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-eduGreen-600 via-emerald-500 to-transparent" />
 
-                        <div className="flex justify-between items-start mb-6">
-                            <Button
-                                variant="ghost"
-                                onClick={() => setIsAdding(false)}
-                                className="p-0 h-auto hover:bg-transparent text-zinc-700 hover:text-white transition-colors group/back"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center group-hover/back:border-eduGreen-500 transition-all">
-                                        <ArrowLeft className="w-4 h-4" />
+                        <CardHeader className="p-12 pb-6">
+                            <div className="flex justify-between items-start mb-8">
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => setIsAdding(false)}
+                                    className="p-0 h-auto hover:bg-transparent text-zinc-700 hover:text-white transition-colors group/back"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center group-hover/back:border-eduGreen-500 transition-all">
+                                            <ArrowLeft className="w-4 h-4" />
+                                        </div>
+                                        <span className="text-[10px] font-black uppercase tracking-widest mt-0.5">Abort Sink</span>
                                     </div>
-                                    <span className="text-[10px] font-black uppercase tracking-widest mt-0.5">Back to Dashboard</span>
+                                </Button>
+                                <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center border border-zinc-800 shadow-xl">
+                                    <GraduationCap className="h-8 w-8 text-eduGreen-500" />
                                 </div>
-                            </Button>
-                            <div className="w-14 h-14 bg-zinc-900 rounded-2xl flex items-center justify-center border border-zinc-800 shadow-xl">
-                                <GraduationCap className="h-7 w-7 text-eduGreen-500" />
                             </div>
-                        </div>
-                        <CardTitle className="text-3xl font-black text-dm-textMain tracking-tight">Student Authentication</CardTitle>
-                        <CardDescription className="text-zinc-600 font-bold uppercase tracking-widest text-[9px] mt-2 text-center">
-                            Enter the tactical student identifier provided by the institution
-                        </CardDescription>
+                            <CardTitle className="text-4xl font-black text-white tracking-tight">Student Authentication</CardTitle>
+                            <CardDescription className="text-zinc-600 font-bold uppercase tracking-widest text-[9px] mt-3">
+                                Enter the tactical student identifier provided by the institution
+                            </CardDescription>
+                        </CardHeader>
 
                         <CardContent className="px-12 pb-12 space-y-8">
                             {status === 'SUCCESS' ? (
@@ -175,28 +163,28 @@ export function ParentView({ user, childrenData: initialChildren }: { user: any,
                                     <div className="w-20 h-20 bg-eduGreen-950/30 rounded-full flex items-center justify-center mx-auto mb-6 border border-eduGreen-900/50">
                                         <CheckCircle2 className="w-10 h-10 text-eduGreen-500" />
                                     </div>
-                                    <h3 className="text-2xl font-black text-dm-textMain uppercase tracking-tight">Protocol Established</h3>
+                                    <h3 className="text-2xl font-black text-white uppercase tracking-tight">Protocol Established</h3>
                                     <p className="text-zinc-600 font-bold uppercase tracking-[0.2em] text-[10px] mt-3">Synchronizing family dashboard...</p>
                                 </div>
                             ) : (status === 'CONFIRMING' || status === 'LINKING') && foundStudent ? (
-                                <div className="bg-zinc-950/80 rounded-[2rem] p-8 border border-zinc-900/80 animate-in fade-in slide-in-from-bottom-8">
+                                <div className="bg-zinc-900/20 rounded-[2rem] p-8 border border-zinc-900 animate-in fade-in slide-in-from-bottom-8">
                                     <div className="grid gap-4">
-                                        <div className="flex items-center gap-5 p-5 bg-zinc-900/40 rounded-2xl border border-zinc-800/50">
-                                            <div className="w-12 h-12 rounded-xl bg-zinc-950 flex items-center justify-center border border-zinc-900">
-                                                <User className="h-6 w-6 text-zinc-500" />
+                                        <div className="flex items-center gap-5 p-6 bg-zinc-950/50 rounded-2xl border border-zinc-900">
+                                            <div className="w-14 h-14 rounded-xl bg-zinc-900 flex items-center justify-center border border-zinc-800">
+                                                <User className="h-7 w-7 text-zinc-500" />
                                             </div>
                                             <div>
                                                 <p className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Full Name</p>
-                                                <p className="text-lg font-black text-white tracking-tight">{foundStudent.firstName} {foundStudent.lastName}</p>
+                                                <p className="text-xl font-black text-white tracking-tight">{foundStudent.firstName} {foundStudent.lastName}</p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-5 p-5 bg-zinc-900/40 rounded-2xl border border-zinc-800/50">
-                                            <div className="w-12 h-12 rounded-xl bg-zinc-950 flex items-center justify-center border border-zinc-900">
-                                                <School className="h-6 w-6 text-zinc-500" />
+                                        <div className="flex items-center gap-5 p-6 bg-zinc-950/50 rounded-2xl border border-zinc-900">
+                                            <div className="w-14 h-14 rounded-xl bg-zinc-900 flex items-center justify-center border border-zinc-800">
+                                                <School className="h-7 w-7 text-zinc-500" />
                                             </div>
                                             <div>
                                                 <p className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Institutional Context</p>
-                                                <p className="text-lg font-black text-white tracking-tight">{foundStudent.schoolName} • Grade {foundStudent.gradeLevel}</p>
+                                                <p className="text-xl font-black text-white tracking-tight">{foundStudent.schoolName} • Grade {foundStudent.gradeLevel}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -207,32 +195,32 @@ export function ParentView({ user, childrenData: initialChildren }: { user: any,
                                         </div>
                                     )}
 
-                                    <div className="flex gap-4 mt-8">
+                                    <div className="flex gap-4 mt-10">
                                         <Button
                                             variant="ghost"
                                             onClick={() => { setStatus('IDLE'); setFoundStudent(null); }}
-                                            className="flex-1 h-14 bg-zinc-900/50 hover:bg-zinc-900 text-zinc-600 hover:text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em]"
+                                            className="flex-1 h-16 bg-zinc-900/50 hover:bg-zinc-900 text-zinc-600 hover:text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em]"
                                         >
                                             Decline
                                         </Button>
                                         <Button
                                             onClick={confirmLink}
-                                            className="flex-1 h-14 bg-eduGreen-600 hover:bg-eduGreen-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em]"
-                                            isLoading={status === 'LINKING'}
+                                            className="flex-1 h-16 bg-eduGreen-600 hover:bg-eduGreen-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em]"
+                                            disabled={status === 'LINKING'}
                                         >
-                                            Accept Protocol
+                                            {status === 'LINKING' ? <Loader2 className="w-5 h-5 animate-spin" /> : "Accept Protocol"}
                                         </Button>
                                     </div>
                                 </div>
                             ) : (
-                                <form onSubmit={verifyCode} className="space-y-6">
-                                    <div className="space-y-4">
-                                        <label className="text-[10px] font-black text-zinc-700 uppercase tracking-[0.3em] ml-2">Digital Token</label>
+                                <form onSubmit={verifyCode} className="space-y-8">
+                                    <div className="space-y-5">
+                                        <label className="text-[10px] font-black text-zinc-700 uppercase tracking-[0.3em] ml-3">Digital Token</label>
                                         <Input
                                             placeholder="STU-XXXX-XXXX"
                                             value={code}
                                             onChange={e => setCode(e.target.value.toUpperCase())}
-                                            className="text-center text-3xl font-black tracking-[0.3em] uppercase h-24 bg-zinc-900/30 border-zinc-800 text-dm-textMain focus:border-eduGreen-600 transition-all border-2 rounded-[2rem]"
+                                            className="text-center text-4xl font-black tracking-[0.3em] uppercase h-28 bg-zinc-900/30 border-zinc-900 text-white focus:border-eduGreen-600 transition-all border-2 rounded-[2.5rem]"
                                             maxLength={10}
                                             required
                                             disabled={status === 'VERIFYING'}
@@ -245,25 +233,14 @@ export function ParentView({ user, childrenData: initialChildren }: { user: any,
                                         </div>
                                     )}
 
-                                    <div className="space-y-4 pt-4">
+                                    <div className="pt-4">
                                         <Button
                                             type="submit"
-                                            isLoading={status === 'VERIFYING'}
-                                            className="w-full h-16 bg-white text-black hover:bg-zinc-200 rounded-[1.5rem] font-black text-sm uppercase tracking-[0.3em] transition-all"
+                                            className="w-full h-20 bg-white text-black hover:bg-zinc-200 rounded-[2rem] font-black text-sm uppercase tracking-[0.3em] transition-all"
+                                            disabled={status === 'VERIFYING'}
                                         >
-                                            Initiate Verification
+                                            {status === 'VERIFYING' ? <Loader2 className="w-6 h-6 animate-spin" /> : "Initiate Verification"}
                                         </Button>
-
-                                        {students.length > 0 && (
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                className="w-full h-14 text-zinc-700 hover:text-white font-black uppercase tracking-[0.2em] text-[10px]"
-                                                onClick={() => setIsAdding(false)}
-                                            >
-                                                Abort Sequential Link
-                                            </Button>
-                                        )}
                                     </div>
                                 </form>
                             )}
@@ -271,87 +248,71 @@ export function ParentView({ user, childrenData: initialChildren }: { user: any,
                     </Card>
                 </div>
             ) : students.length > 0 ? (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-6">
                     {students.map((child) => (
-                        <Card key={child.id} className="group relative bg-zinc-950/50 backdrop-blur-2xl border-zinc-900 rounded-[2.5rem] overflow-hidden hover:border-eduGreen-900/40 transition-all border-t-zinc-800/20 shadow-2xl">
+                        <Card key={child.id} className="group relative bg-zinc-950/40 backdrop-blur-xl border-zinc-900/50 rounded-[3rem] overflow-hidden hover:border-eduGreen-900/40 transition-all border-t-zinc-800/20 shadow-2xl">
                             <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-eduGreen-600 via-emerald-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                            <CardHeader className="p-8 pb-4">
-                                <div className="flex items-start justify-between gap-4 mb-4">
+                            <CardHeader className="p-6 pb-4">
+                                <div className="flex items-start justify-between gap-6 mb-4">
                                     <div className="w-14 h-14 bg-zinc-900 rounded-2xl flex items-center justify-center border border-zinc-800 shadow-xl group-hover:border-eduGreen-900/20 transition-all">
                                         <span className="text-xl font-black text-eduGreen-500">{child.firstName[0]}</span>
                                     </div>
                                     <div className="flex flex-col items-end gap-2">
-                                        <div className="px-3 py-1.5 rounded-xl bg-zinc-900/50 border border-zinc-900 text-[9px] font-black text-zinc-500 uppercase tracking-widest group-hover:text-eduGreen-600 group-hover:border-eduGreen-900/20 transition-all">
+                                        <div className="px-3 py-1 rounded-xl bg-zinc-900/50 border border-zinc-900 text-[9px] font-black text-zinc-500 uppercase tracking-widest group-hover:text-eduGreen-600 group-hover:border-eduGreen-900/20 transition-all">
                                             Active Profile
                                         </div>
-                                        <span className="text-[8px] font-mono text-zinc-700 font-bold uppercase tracking-wider group-hover:text-zinc-500 transition-colors">
+                                        <span className="text-[8px] font-mono text-zinc-700 font-bold uppercase tracking-wider">
                                             {child.studentCode}
                                         </span>
                                     </div>
                                 </div>
-                                <CardTitle className="text-2xl font-black text-dm-textMain group-hover:text-dm-textMain transition-colors tracking-tight leading-tight">{child.firstName} {child.lastName}</CardTitle>
-                                <div className="flex items-center gap-3 mt-2">
+                                <CardTitle className="text-2xl font-black text-white transition-colors tracking-tight leading-tight">{child.firstName} {child.lastName}</CardTitle>
+                                <div className="flex items-center gap-4 mt-2">
                                     <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Grade {child.grade?.level || "N/A"}</span>
-                                    <div className="w-1 h-1 rounded-full bg-zinc-800" />
-                                    <span className="text-[9px] font-black text-eduGreen-800 uppercase tracking-tighter truncate max-w-[120px] shadow-sm">{child.school?.name}</span>
+                                    <div className="w-1.5 h-1.5 rounded-full bg-zinc-900" />
+                                    <span className="text-[9px] font-black text-eduGreen-800 uppercase tracking-tighter truncate max-w-[140px]">{child.school?.name}</span>
                                 </div>
                             </CardHeader>
-                            <CardContent className="p-8 pt-6 space-y-3">
-                                <div className="grid grid-cols-2 gap-3 mb-6">
-                                    <div className="p-4 bg-zinc-900/40 rounded-2xl border border-zinc-900 border-t-zinc-800/20">
-                                        <p className="text-[8px] font-black text-zinc-700 uppercase tracking-widest mb-1">Attendance</p>
+                            <CardContent className="p-6 pt-2 space-y-4">
+                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                    <div className="p-4 bg-zinc-900/30 rounded-2xl border border-zinc-900">
+                                        <p className="text-[8px] font-black text-zinc-700 uppercase tracking-widest mb-2">Attendance</p>
                                         <div className="flex items-center gap-2">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-eduGreen-500 shadow-[0_0_8px_rgba(33,201,141,0.5)]" />
-                                            <span className="text-sm font-black text-dm-textMain">96.8%</span>
+                                            <div className="w-2 h-2 rounded-full bg-eduGreen-500 animate-pulse shadow-[0_0_10px_rgba(33,201,141,0.5)]" />
+                                            <span className="text-lg font-black text-white">96.8%</span>
                                         </div>
                                     </div>
-                                    <div className="p-4 bg-zinc-900/40 rounded-2xl border border-zinc-900 border-t-zinc-800/20">
-                                        <p className="text-[8px] font-black text-zinc-700 uppercase tracking-widest mb-1">Academic GPA</p>
+                                    <div className="p-4 bg-zinc-900/30 rounded-2xl border border-zinc-900">
+                                        <p className="text-[8px] font-black text-zinc-700 uppercase tracking-widest mb-2">Academic GPA</p>
                                         <div className="flex items-center gap-2">
-                                            <Sparkles className="w-3.5 h-3.5 text-eduGreen-500" />
-                                            <span className="text-sm font-black text-dm-textMain">B+ (3.4)</span>
+                                            <Sparkles className="w-4 h-4 text-eduGreen-500" />
+                                            <span className="text-lg font-black text-white">B+ (3.4)</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <Button
-                                    className="w-full h-14 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 hover:text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] border border-zinc-900 hover:border-zinc-700 transition-all shadow-lg"
-                                >
+                                <Button className="w-full h-12 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 hover:text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] border border-zinc-900 hover:border-zinc-700 transition-all shadow-lg">
                                     Access Performance Logs
                                 </Button>
 
-                                {child.userId && (
-                                    <Link href={`/dashboard/messages?userId=${child.userId}`}>
-                                        <Button
-                                            className="w-full h-14 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 hover:text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] border border-zinc-900 hover:border-zinc-700 transition-all shadow-lg"
-                                        >
-                                            <MessageSquare className="w-4 h-4 mr-2" />
-                                            Message {child.firstName}
-                                        </Button>
-                                    </Link>
-                                )}
-
-                                {child.class?.homeroomTeacherId && (
-                                    <Link href={`/dashboard/messages?userId=${child.class.homeroomTeacherId}`}>
-                                        <Button
-                                            className="w-full h-14 bg-eduGreen-900/10 hover:bg-eduGreen-900/20 text-eduGreen-500 hover:text-eduGreen-400 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] border border-eduGreen-900/20 hover:border-eduGreen-800/30 transition-all shadow-lg"
-                                        >
-                                            <MessageSquare className="w-4 h-4 mr-2" />
-                                            Message Teacher
-                                        </Button>
-                                    </Link>
-                                )}
-
-                                {child.principal && (
-                                    <Link href={`/dashboard/messages?userId=${child.principal.id}`}>
-                                        <Button
-                                            className="w-full h-14 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 hover:text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] border border-zinc-900 hover:border-zinc-700 transition-all shadow-lg"
-                                        >
-                                            <Shield className="w-4 h-4 mr-2" />
-                                            Message Principal
-                                        </Button>
-                                    </Link>
+                                {(child.userId || child.class?.homeroomTeacherId) && (
+                                    <div className="grid gap-3 pt-2">
+                                        {child.userId && (
+                                            <Link href={`/dashboard/messages?userId=${child.userId}`}>
+                                                <Button className="w-full h-12 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 hover:text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] border border-zinc-900 hover:border-zinc-700 transition-all shadow-lg">
+                                                    <MessageSquare className="w-4 h-4 mr-2" /> Message {child.firstName}
+                                                </Button>
+                                            </Link>
+                                        )}
+                                        {child.class?.homeroomTeacherId && (
+                                            <Link href={`/dashboard/messages?userId=${child.class.homeroomTeacherId}`}>
+                                                <Button className="w-full h-12 bg-eduGreen-900/10 hover:bg-eduGreen-900/20 text-eduGreen-500 hover:text-eduGreen-400 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] border border-eduGreen-900/20 hover:border-eduGreen-800/30 transition-all">
+                                                    <MessageSquare className="w-4 h-4 mr-2" /> Message Teacher
+                                                </Button>
+                                            </Link>
+                                        )}
+                                    </div>
                                 )}
                             </CardContent>
                         </Card>

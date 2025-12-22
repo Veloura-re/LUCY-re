@@ -12,7 +12,8 @@ import {
     Settings,
     LogOut,
     GraduationCap,
-    BarChart3
+    BarChart3,
+    CreditCard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SignOutButton } from "@/components/auth/sign-out-button";
@@ -30,10 +31,28 @@ export default async function DashboardLayout({
     }
 
     // Fetch full user profile with role
-    const dbUser = await prisma.user.findUnique({
+    let dbUser = await prisma.user.findUnique({
         where: { id: user.id },
         include: { school: true }
     });
+
+    // Fallback to email search if ID mismatch occurs (common after DB resets)
+    if (!dbUser && user.email) {
+        dbUser = await prisma.user.findUnique({
+            where: { email: user.email },
+            include: { school: true }
+        });
+
+        if (dbUser) {
+            console.warn(`[Layout] ID mismatch for ${user.email}. Syncing Prisma ID to Supabase ID.`);
+            // Update Prisma user ID to match Supabase for consistency
+            // Note: This is invasive but fixes the root cause across all queries
+            await prisma.user.update({
+                where: { email: user.email },
+                data: { id: user.id }
+            });
+        }
+    }
 
     if (!dbUser) {
         // Instead of a plain redirect which triggers a loop if middleware sees 'user' but not 'dbUser',
@@ -54,6 +73,7 @@ export default async function DashboardLayout({
             { icon: Calendar, label: "Timetable", href: "/dashboard/timetable" },
             { icon: Users, label: "Attendance", href: "/dashboard/attendance/settings" },
             { icon: BarChart3, label: "Reports", href: "/dashboard/reports" },
+            { icon: CreditCard, label: "Finance", href: "/dashboard/finance" },
             { icon: MessageSquare, label: "Messages", href: "/dashboard/messages" },
             { icon: Settings, label: "Settings", href: "/dashboard/settings" },
         ],
@@ -74,6 +94,7 @@ export default async function DashboardLayout({
         ],
         PARENT: [
             { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
+            { icon: CreditCard, label: "Billing", href: "/dashboard/finance" },
             { icon: MessageSquare, label: "Messages", href: "/dashboard/messages" },
             { icon: Settings, label: "Settings", href: "/dashboard/settings" },
         ],

@@ -1,29 +1,21 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown } from "lucide-react";
-
-// Simplified Select Component matching Shadcn API
-// Using native select for MVP logic if complex custom dropdown is too heavy, 
-// BUT my code expects Composable parts. I'll make a mocked composable version.
-
-// Context to share state
-// Simplified Select Component matching Shadcn API
-// Using custom implementation to ensure it works in this environment
+import { ChevronDown, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const SelectContext = React.createContext<any>(null);
 
 export function Select({ children, onValueChange, value, disabled }: any) {
     const [open, setOpen] = React.useState(false);
     const [selectedValue, setSelectedValue] = React.useState(value);
+    const [itemMap, setItemMap] = React.useState<Record<string, React.ReactNode>>({});
     const containerRef = React.useRef<HTMLDivElement>(null);
 
-    // Sync with external value
     React.useEffect(() => {
         setSelectedValue(value);
     }, [value]);
 
-    // Handle clicking outside
     React.useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -38,6 +30,13 @@ export function Select({ children, onValueChange, value, disabled }: any) {
         };
     }, [open]);
 
+    const registerItem = React.useCallback((val: string, label: React.ReactNode) => {
+        setItemMap(prev => {
+            if (prev[val] === label) return prev;
+            return { ...prev, [val]: label };
+        });
+    }, []);
+
     const handleSelect = (val: string) => {
         setSelectedValue(val);
         if (onValueChange) onValueChange(val);
@@ -45,40 +44,50 @@ export function Select({ children, onValueChange, value, disabled }: any) {
     };
 
     return (
-        <SelectContext.Provider value={{ open, setOpen, selectedValue, handleSelect, disabled }}>
-            <div ref={containerRef} className="relative w-full">{children}</div>
+        <SelectContext.Provider value={{ open, setOpen, selectedValue, handleSelect, disabled, registerItem, itemMap }}>
+            <div ref={containerRef} className="relative w-full group">{children}</div>
         </SelectContext.Provider>
     );
 }
 
 export function SelectTrigger({ children, className }: any) {
-    const { open, setOpen, selectedValue, disabled } = React.useContext(SelectContext);
+    const { open, setOpen, disabled } = React.useContext(SelectContext);
     return (
         <button
             disabled={disabled}
             type="button"
-            className={`flex h-10 w-full items-center justify-between rounded-md border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm ring-offset-background placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-eduGreen-500/50 disabled:cursor-not-allowed disabled:opacity-50 transition-all ${className}`}
+            className={cn(
+                "flex h-14 w-full items-center justify-between rounded-2xl border border-zinc-900 bg-zinc-950/40 backdrop-blur-xl px-4 py-2 text-xs font-black uppercase tracking-widest text-zinc-100 transition-all hover:border-eduGreen-900/40 focus:outline-none focus:ring-2 focus:ring-eduGreen-600/20 disabled:cursor-not-allowed disabled:opacity-50",
+                open ? "border-eduGreen-600/50 shadow-[0_0_20px_rgba(20,122,82,0.1)]" : "shadow-2xl",
+                className
+            )}
             onClick={() => setOpen(!open)}
         >
-            {children}
-            <ChevronDown className={`h-4 w-4 opacity-50 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+            <div className="flex items-center gap-3">{children}</div>
+            <ChevronDown className={cn("h-4 w-4 text-zinc-600 transition-transform duration-300", open ? "rotate-180 text-eduGreen-500" : "")} />
         </button>
     );
 }
 
 export function SelectValue({ placeholder }: any) {
-    const { selectedValue, children } = React.useContext(SelectContext);
-    // Note: In this simplified version, finding the label for a value is hard without extra props.
-    // For now, we rely on the value being readable or the user just seeing the value.
-    return <span className="truncate">{selectedValue || placeholder}</span>;
+    const { selectedValue, itemMap } = React.useContext(SelectContext);
+    const label = selectedValue ? itemMap[selectedValue] : null;
+    return (
+        <span className={cn("truncate font-black", !label ? "text-zinc-700" : "text-white")}>
+            {label || placeholder}
+        </span>
+    );
 }
 
 export function SelectContent({ children, className }: any) {
     const { open } = React.useContext(SelectContext);
     if (!open) return null;
     return (
-        <div className={`absolute z-[100] mt-2 min-w-[8rem] overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-100 shadow-2xl animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 top-full w-full ${className}`}>
-            <div className="p-1 max-h-60 overflow-y-auto w-full thin-scrollbar">
+        <div className={cn(
+            "absolute z-[100] mt-3 min-w-[8rem] overflow-hidden rounded-[2rem] border border-zinc-900 bg-zinc-950/95 backdrop-blur-3xl p-2 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-300 top-full w-full",
+            className
+        )}>
+            <div className="max-h-68 overflow-y-auto space-y-1 p-1 thin-scrollbar">
                 {children}
             </div>
         </div>
@@ -86,14 +95,26 @@ export function SelectContent({ children, className }: any) {
 }
 
 export function SelectItem({ children, value, className }: any) {
-    const { handleSelect, selectedValue } = React.useContext(SelectContext);
+    const { handleSelect, selectedValue, registerItem } = React.useContext(SelectContext);
     const isSelected = selectedValue === value;
+
+    React.useEffect(() => {
+        registerItem(value, children);
+    }, [value, children, registerItem]);
+
     return (
         <div
-            className={`relative flex w-full cursor-pointer select-none items-center rounded-lg py-2.5 pl-4 pr-2 text-[10px] font-black uppercase tracking-widest outline-none transition-colors hover:bg-eduGreen-900/20 hover:text-eduGreen-400 ${isSelected ? 'bg-eduGreen-950/30 text-eduGreen-500' : 'text-zinc-400'} ${className}`}
+            className={cn(
+                "relative flex w-full cursor-pointer select-none items-center justify-between rounded-xl py-3 px-4 text-[10px] font-black uppercase tracking-widest outline-none transition-all",
+                isSelected
+                    ? "bg-eduGreen-950/30 text-eduGreen-400 border border-eduGreen-900/20"
+                    : "text-zinc-500 hover:bg-zinc-900 hover:text-zinc-200",
+                className
+            )}
             onClick={() => handleSelect(value)}
         >
-            {children}
+            <span className="truncate">{children}</span>
+            {isSelected && <Check className="w-3.5 h-3.5 text-eduGreen-500 animate-in zoom-in-50 duration-300" />}
         </div>
     );
 }
