@@ -88,6 +88,23 @@ export default function RegisterPage() {
                         </Card>
                     </Link>
 
+                    {/* Student Card */}
+                    <Link href="/register/student" className="group relative h-full">
+                        <div className="absolute -inset-0.5 bg-gradient-to-b from-eduGreen-500/40 to-transparent rounded-[2rem] opacity-0 group-hover:opacity-100 transition duration-700 blur-xl"></div>
+                        <Card className="relative h-full bg-zinc-900/40 backdrop-blur-xl border-zinc-800/80 group-hover:border-eduGreen-500/50 transition-all duration-500 rounded-[2rem] overflow-hidden flex flex-col items-center text-center p-8">
+                            <div className="w-16 h-16 bg-zinc-950 rounded-2xl flex items-center justify-center border border-zinc-800 group-hover:border-eduGreen-500/30 group-hover:bg-eduGreen-900/10 transition-all duration-500 mb-6 shadow-2xl">
+                                <GraduationCap className="h-7 w-7 text-eduGreen-400 group-hover:scale-110 transition-transform duration-500" />
+                            </div>
+                            <CardTitle className="text-xl font-black text-white mb-2">Global Student</CardTitle>
+                            <p className="text-xs text-zinc-500 font-medium leading-relaxed flex-1">
+                                Access your personalized learning hub. Track grades, exams, and attendance.
+                            </p>
+                            <div className="mt-8 py-3 px-6 rounded-full bg-zinc-950 border border-zinc-800 text-[10px] font-bold text-zinc-400 group-hover:text-eduGreen-400 group-hover:border-eduGreen-900/50 transition-all flex items-center gap-2 uppercase tracking-widest">
+                                Enter Portal <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                            </div>
+                        </Card>
+                    </Link>
+
                     {/* Teachers/Staff (Disabled/Info State) */}
                     <div className="relative h-full group opacity-80">
                         <Card className="relative h-full bg-zinc-950/20 backdrop-blur-sm border-zinc-900 border-dashed border-2 rounded-[2rem] overflow-hidden flex flex-col items-center text-center p-8">

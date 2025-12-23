@@ -242,7 +242,7 @@ export default function StudentsPage() {
                                             <BookOpen className="w-3.5 h-3.5 text-zinc-700 group-hover:text-eduGreen-600 transition-colors" />
                                             {student.class ? student.class.name : "Unassigned"}
                                         </div>
-                                        {student.userId && me?.user_metadata?.role !== 'STUDENT' && (
+                                        {student.userId && me?.user_metadata?.role !== 'STUDENT' ? (
                                             <Link href={`/dashboard/messages?userId=${student.userId}`}>
                                                 <Button
                                                     variant="ghost"
@@ -253,6 +253,16 @@ export default function StudentsPage() {
                                                     <MessageSquare className="w-4 h-4" />
                                                 </Button>
                                             </Link>
+                                        ) : (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                disabled
+                                                title="Student not registered yet"
+                                                className="w-10 h-10 rounded-xl text-zinc-800 opacity-50 cursor-not-allowed"
+                                            >
+                                                <MessageSquare className="w-4 h-4" />
+                                            </Button>
                                         )}
                                         {student.parentLinks?.[0]?.parent && (
                                             <Link href={`/dashboard/messages?userId=${student.parentLinks[0].parent.id}`}>

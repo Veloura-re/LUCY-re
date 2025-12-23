@@ -13,10 +13,23 @@ const DAYS = [
     { label: "Friday", value: "FRI" }
 ];
 
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { format } from "date-fns";
+import { toast } from "sonner";
+
 export default function TeacherSchedulePage() {
     const [timetable, setTimetable] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedDay, setSelectedDay] = useState(DAYS[new Date().getDay() - 1]?.value || "MON");
+
+    const [syncModalOpen, setSyncModalOpen] = useState(false);
+    const [selectedSlot, setSelectedSlot] = useState<any>(null);
+    const [lessonData, setLessonData] = useState({ topic: "", objectives: "" });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         fetchSchedule();
@@ -32,6 +45,56 @@ export default function TeacherSchedulePage() {
             console.error("Failed to fetch schedule", e);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const openSyncModal = (slot: any) => {
+        // Calculate date based on Selected Day (Current week)
+        const today = new Date();
+        const currentDay = today.getDay(); // 0-6
+        const daysMap: any = { "MON": 1, "TUE": 2, "WED": 3, "THU": 4, "FRI": 5 };
+        const targetDay = daysMap[slot.dayOfWeek];
+        // Simple logic for current week. 
+        // If today is Monday(1) and target is Tuesday(2), add 1 day.
+        // We'll approximate date for the prototype. In real app, date picker would be better or explicit week selector.
+        // Let's assume current week.
+        const diff = targetDay - (currentDay === 0 ? 7 : currentDay);
+        const targetDate = new Date(today);
+        targetDate.setDate(today.getDate() + diff);
+
+        setSelectedSlot({ ...slot, targetDate });
+        // Optionally fetch existing lesson here if we supported GET
+        setLessonData({ topic: "", objectives: "" });
+        setSyncModalOpen(true);
+    };
+
+    const handleLessonSync = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        try {
+            const res = await fetch('/api/teacher/lessons', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    classId: selectedSlot.classId,
+                    subjectId: selectedSlot.subjectId,
+                    periodId: selectedSlot.periodId,
+                    date: selectedSlot.targetDate.toISOString(),
+                    topic: lessonData.topic,
+                    objectives: lessonData.objectives
+                })
+            });
+
+            if (res.ok) {
+                toast.success("Lesson Synced Successfully");
+                setSyncModalOpen(false);
+            } else {
+                toast.error("Sync Failed");
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -102,7 +165,10 @@ export default function TeacherSchedulePage() {
                                         </div>
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <button className="h-12 px-6 rounded-xl bg-zinc-900 border border-zinc-800 text-white font-black text-[10px] uppercase tracking-widest hover:bg-zinc-800 transition-all">
+                                        <button
+                                            onClick={() => openSyncModal(slot)}
+                                            className="h-12 px-6 rounded-xl bg-zinc-900 border border-zinc-800 text-white font-black text-[10px] uppercase tracking-widest hover:bg-zinc-800 transition-all hover:border-eduGreen-500/50 hover:text-eduGreen-500"
+                                        >
                                             Access Lesson Sync
                                         </button>
                                         <button className="h-10 text-eduGreen-500 font-black text-[9px] uppercase tracking-widest hover:underline text-right">
@@ -131,6 +197,45 @@ export default function TeacherSchedulePage() {
                     <p className="text-3xl font-black text-white">{new Set(timetable.map(t => t.classId)).size} <span className="text-sm text-zinc-800 uppercase">Groups</span></p>
                 </Card>
             </div>
-        </div>
+
+            {/* Sync Modal */}
+            <Dialog open={syncModalOpen} onOpenChange={setSyncModalOpen}>
+                <DialogContent className="max-w-lg bg-zinc-950/95 backdrop-blur-3xl border-zinc-900 rounded-[2rem] p-0 overflow-hidden">
+                    <DialogHeader className="p-8 border-b border-zinc-900">
+                        <DialogTitle className="text-2xl font-black text-white tracking-tighter uppercase">
+                            Lesson <span className="text-eduGreen-500">Sync</span>
+                        </DialogTitle>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600">
+                            {selectedSlot && `${selectedSlot.subject?.name} • ${format(selectedSlot.targetDate, 'MMM d')}`}
+                        </p>
+                    </DialogHeader>
+                    <form onSubmit={handleLessonSync} className="p-8 space-y-6">
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Topic of Study</Label>
+                            <Input
+                                value={lessonData.topic}
+                                onChange={e => setLessonData({ ...lessonData, topic: e.target.value })}
+                                required
+                                placeholder="e.g. Introduction to Quantum Physics"
+                                className="bg-zinc-900/50 border-zinc-800 rounded-xl font-bold"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Learning Objectives</Label>
+                            <Textarea
+                                value={lessonData.objectives}
+                                onChange={e => setLessonData({ ...lessonData, objectives: e.target.value })}
+                                placeholder="• Understand wave-particle duality..."
+                                rows={4}
+                                className="bg-zinc-900/50 border-zinc-800 rounded-xl font-medium resize-none"
+                            />
+                        </div>
+                        <Button type="submit" disabled={isSubmitting} className="w-full bg-eduGreen-600 hover:bg-eduGreen-500 text-white font-black uppercase tracking-widest h-12 rounded-xl">
+                            {isSubmitting ? "Syncing..." : "Sync to Student Hub"}
+                        </Button>
+                    </form>
+                </DialogContent>
+            </Dialog>
+        </div >
     );
 }

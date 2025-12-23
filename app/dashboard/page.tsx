@@ -63,7 +63,7 @@ export default async function DashboardPage() {
         case 'PARENT':
             return <ParentView user={dbUser} />;
         case 'STUDENT':
-            return <StudentView user={dbUser} />;
+            redirect('/dashboard/student');
         default:
             return <div className="p-20 text-center font-black uppercase tracking-widest text-zinc-800">Operational Role Not Discovered</div>;
     }

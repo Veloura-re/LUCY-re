@@ -143,11 +143,18 @@ export default function ExamsPage() {
                                 </div>
                             </div>
 
-                            <Link href={`/dashboard/teacher/gradebook/${exam.id}`} passHref>
-                                <Button className="w-full h-14 bg-zinc-900 border border-zinc-800 text-white font-black text-[10px] uppercase tracking-widest hover:bg-zinc-800 transition-all rounded-2xl group-hover:border-eduGreen-900/20 group-hover:bg-zinc-950">
-                                    Access Registry Hub <ArrowRight className="ml-2 w-3 h-3 text-eduGreen-500" />
-                                </Button>
-                            </Link>
+                            <div className="grid grid-cols-2 gap-4">
+                                <Link href={`/dashboard/teacher/exams/${exam.id}/editor`} passHref>
+                                    <Button variant="outline" className="w-full h-14 border-zinc-800 text-zinc-500 hover:text-white hover:bg-zinc-900 font-black text-[10px] uppercase tracking-widest rounded-2xl">
+                                        Edit Schema
+                                    </Button>
+                                </Link>
+                                <Link href={`/dashboard/teacher/gradebook/${exam.id}`} passHref>
+                                    <Button className="w-full h-14 bg-zinc-900 border border-zinc-800 text-white font-black text-[10px] uppercase tracking-widest hover:bg-zinc-800 transition-all rounded-2xl group-hover:border-eduGreen-900/20 group-hover:bg-zinc-950">
+                                        Registry Hub <ArrowRight className="ml-2 w-3 h-3 text-eduGreen-500" />
+                                    </Button>
+                                </Link>
+                            </div>
                         </CardContent>
                     </Card>
                 ))}

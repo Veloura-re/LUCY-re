@@ -105,8 +105,10 @@ export default async function DashboardLayout({
             { icon: Settings, label: "Settings", href: "/dashboard/settings" },
         ],
         STUDENT: [
-            { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
+            { icon: LayoutDashboard, label: "My Hub", href: "/dashboard/student" },
             { icon: Calendar, label: "Timetable", href: "/dashboard/student/timetable" },
+            { icon: BookOpen, label: "Exams", href: "/dashboard/student/exams" },
+            { icon: BarChart3, label: "Grades", href: "/dashboard/student/grades" },
             { icon: MessageSquare, label: "Messages", href: "/dashboard/messages" },
             { icon: Settings, label: "Settings", href: "/dashboard/settings" },
         ],

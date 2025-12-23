@@ -302,13 +302,20 @@ function MessagesContent() {
 
     const handleSearch = async (query: string) => {
         setSearchQuery(query);
+        // Minimum length check depends on context, Code is usually longer
         if (query.length < 2) {
             setSearchResults([]);
             return;
         }
 
         try {
-            const res = await fetch(`/api/school/users/search?q=${query}`);
+            // If I am a student, search by code using lookup API
+            const isStudent = me?.user_metadata?.role === 'STUDENT';
+            const endpoint = isStudent
+                ? `/api/students/lookup?code=${query}`
+                : `/api/school/users/search?q=${query}`;
+
+            const res = await fetch(endpoint);
             const data = await res.json();
             if (data.users) setSearchResults(data.users);
         } catch (e) {
@@ -359,7 +366,7 @@ function MessagesContent() {
                         <div className="relative group">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 group-focus-within:text-eduGreen-500 transition-colors" />
                             <Input
-                                placeholder="Search identity..."
+                                placeholder={me?.user_metadata?.role === 'STUDENT' ? "Enter Student Code..." : "Search identity..."}
                                 className="pl-11 bg-zinc-900/50 border-zinc-800 h-12 rounded-2xl focus:border-eduGreen-600 transition-all font-bold text-xs"
                                 value={searchQuery}
                                 onChange={(e) => handleSearch(e.target.value)}

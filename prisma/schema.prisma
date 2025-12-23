@@ -38,6 +38,7 @@ model User {
   authoredRemarks    StudentRemark[]     @relation("TeacherRemarks")
   teacherAssignments TeacherAssignment[]
   timetable          Timetable[]
+  createdLessons     Lesson[]
   school             School?             @relation(fields: [schoolId], references: [id])
 }
 
@@ -87,6 +88,7 @@ model Class {
   students           Student[]
   teacherAssignments TeacherAssignment[]
   timetable          Timetable[]
+  lessons            Lesson[]
 }
 
 model Subject {
@@ -99,6 +101,7 @@ model Subject {
   school             School              @relation(fields: [schoolId], references: [id])
   teacherAssignments TeacherAssignment[]
   timetable          Timetable[]
+  lessons            Lesson[]
 }
 
 model TeacherAssignment {
@@ -157,6 +160,7 @@ model Exam {
   dueAt             DateTime?
   duration          Int?
   config            Json?
+  questions         Json?
   isLocked          Boolean            @default(false)
   lockedAt          DateTime?
   lockedById        String?
@@ -362,6 +366,7 @@ model Period {
   class             Class?             @relation(fields: [classId], references: [id])
   school            School             @relation(fields: [schoolId], references: [id])
   timetables        Timetable[]
+  lessons           Lesson[]
 
   @@index([schoolId])
   @@index([classId])
@@ -538,4 +543,27 @@ enum PaymentStatus {
   PENDING
   SUCCESS
   FAILED
+}
+
+model Lesson {
+  id          String   @id @default(uuid())
+  classId     String
+  subjectId   String
+  teacherId   String
+  periodId    String?
+  date        DateTime @db.Date
+  topic       String
+  objectives  String?  @db.Text
+  materials   Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  class       Class    @relation(fields: [classId], references: [id])
+  subject     Subject  @relation(fields: [subjectId], references: [id])
+  teacher     User     @relation(fields: [teacherId], references: [id])
+  period      Period?  @relation(fields: [periodId], references: [id])
+
+  @@index([classId])
+  @@index([date])
+  @@index([teacherId])
 }
