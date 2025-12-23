@@ -17,8 +17,10 @@ export async function GET(req: Request) {
         });
 
         if (!student || !student.classId) {
+            console.log("[Dashboard] Student profile inactive for user", user.id);
             return NextResponse.json({ error: "Student profile not active" }, { status: 404 });
         }
+        console.log("[Dashboard] Serving data for:", student.firstName);
 
         // 2. Determine Current Context
         const now = new Date();
@@ -48,47 +50,58 @@ export async function GET(req: Request) {
             }
         }
 
-        if (currentPeriod) {
-            // Get Subject/Teacher for this slot
-            const timetable = await prisma.timetable.findFirst({
-                where: {
-                    classId: student.classId,
-                    periodId: currentPeriod.id,
-                    dayOfWeek: dayOfWeek as any
-                },
-                include: { subject: true, teacher: true }
-            });
-
-            if (timetable) {
-                // Get Specific Lesson Content (Topic)
-                const todayLesson = await prisma.lesson.findFirst({
+        try {
+            if (currentPeriod) {
+                // Get Subject/Teacher for this slot
+                const timetable = await prisma.timetable.findFirst({
                     where: {
                         classId: student.classId,
                         periodId: currentPeriod.id,
-                        date: {
-                            gte: new Date(now.setHours(0, 0, 0, 0)),
-                            lt: new Date(now.setHours(23, 59, 59, 999))
-                        }
-                    }
+                        dayOfWeek: dayOfWeek as any
+                    },
+                    include: { subject: true, teacher: true }
                 });
 
-                // Assemble Lesson Object
-                // Need full Date objects for frontend progress bar
-                const [sH, sM] = currentPeriod.startTime.split(':').map(Number);
-                const [eH, eM] = currentPeriod.endTime.split(':').map(Number);
-                const startD = new Date(); startD.setHours(sH, sM, 0);
-                const endD = new Date(); endD.setHours(eH, eM, 0);
+                if (timetable) {
+                    // Get Specific Lesson Content (Topic)
+                    // SAFELY try to get lesson, if model missing, ignore
+                    let todayLesson = null;
+                    try {
+                        // @ts-ignore
+                        todayLesson = await prisma.lesson.findFirst({
+                            where: {
+                                classId: student.classId,
+                                periodId: currentPeriod.id,
+                                date: {
+                                    gte: new Date(now.setHours(0, 0, 0, 0)),
+                                    lt: new Date(now.setHours(23, 59, 59, 999))
+                                }
+                            }
+                        });
+                    } catch (err) {
+                        console.warn("Lesson fetch failed (model missing?):", err);
+                    }
 
-                activeLesson = {
-                    subject: timetable.subject.name,
-                    topic: todayLesson?.topic || "Regular Session",
-                    teacher: timetable.teacher.name,
-                    startTime: startD,
-                    endTime: endD,
-                    period: currentPeriod.name,
-                    materials: todayLesson?.materials || []
-                };
+                    // Assemble Lesson Object
+                    const [sH, sM] = currentPeriod.startTime.split(':').map(Number);
+                    const [eH, eM] = currentPeriod.endTime.split(':').map(Number);
+                    const startD = new Date(); startD.setHours(sH, sM, 0);
+                    const endD = new Date(); endD.setHours(eH, eM, 0);
+
+                    activeLesson = {
+                        subject: timetable.subject.name,
+                        topic: todayLesson?.topic || "Regular Session",
+                        teacher: timetable.teacher.name,
+                        startTime: startD,
+                        endTime: endD,
+                        period: currentPeriod.name,
+                        materials: todayLesson?.materials || []
+                    };
+                }
             }
+        } catch (lessonError) {
+            console.error("Dashboard Lesson Error:", lessonError);
+            // Continue to return name even if lesson fails
         }
 
         // 4. Stats
@@ -108,7 +121,7 @@ export async function GET(req: Request) {
         });
 
         return NextResponse.json({
-            studentName: student.firstName,
+            studentName: `${student.firstName} ${student.lastName}`,
             currentLesson: activeLesson,
             attendance: attendancePct,
             nextExam: nextExam ? {

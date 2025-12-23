@@ -83,7 +83,7 @@ export default function StudentHubPage() {
             {/* Header */}
             <div>
                 <h1 className="text-4xl font-black text-white tracking-tighter">
-                    Ready to learn, <span className="text-eduGreen-500">{stats.name || "Student"}</span>!
+                    {currentTime.getHours() < 12 ? "Good morning" : currentTime.getHours() < 18 ? "Good afternoon" : "Good evening"}, <span className="text-eduGreen-500">{stats.name || "Student"}</span>
                 </h1>
                 <p className="text-zinc-500 font-bold uppercase tracking-[0.2em] text-xs mt-2">
                     {format(currentTime, "EEEE, MMMM do • HH:mm a")}
