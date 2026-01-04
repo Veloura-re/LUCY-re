@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, BarChart, FileText, Calendar as CalendarIcon, ArrowRight } from "lucide-react";
+import { Plus, BarChart, FileText, Calendar as CalendarIcon, ArrowRight, Sparkles, Brain } from "lucide-react";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -88,12 +88,23 @@ export default function ExamsPage() {
                     </h1>
                     <p className="text-zinc-600 font-bold uppercase tracking-[0.2em] text-[10px] mt-3">Institutional Examination & Assessment Terminal</p>
                 </div>
-                <Button
-                    onClick={() => setIsCreating(true)}
-                    className="bg-eduGreen-600 hover:bg-eduGreen-500 text-white h-14 px-10 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-2xl transition-all active:scale-95 mb-1 shadow-eduGreen-900/20"
-                >
-                    <Plus className="mr-2 h-4 w-4" /> Create Assessment
-                </Button>
+                <div className="flex items-center gap-4">
+                    <Link href="/dashboard/teacher/exams/create?mode=ai" passHref>
+                        <Button
+                            variant="outline"
+                            className="border-zinc-800 text-purple-400 hover:text-white hover:bg-zinc-900 h-14 px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all mb-1 gap-2"
+                        >
+                            <Sparkles className="h-4 w-4" /> Start Writing
+                        </Button>
+                    </Link>
+                    <Link href="/dashboard/teacher/exams/create" passHref>
+                        <Button
+                            className="bg-eduGreen-600 hover:bg-eduGreen-500 text-white h-14 px-10 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-2xl transition-all active:scale-95 mb-1 shadow-eduGreen-900/20 gap-2"
+                        >
+                            <Plus className="h-4 w-4" /> Add Exam
+                        </Button>
+                    </Link>
+                </div>
             </div>
 
             {/* Class Selector Tab/Filter */}
@@ -118,6 +129,26 @@ export default function ExamsPage() {
                 {exams.map((exam) => (
                     <Card key={exam.id} className="group relative bg-zinc-950/40 backdrop-blur-xl border-zinc-900/50 hover:border-eduGreen-900/30 transition-all rounded-[2.5rem] overflow-hidden shadow-2xl border-t-zinc-800/10">
                         <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-eduGreen-600 via-emerald-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                        <div className="absolute top-6 left-10">
+                            {exam.isPublished ? (
+                                <span className="text-[8px] font-black px-3 py-1 bg-eduGreen-950/20 border border-eduGreen-900/30 text-eduGreen-500 rounded-lg uppercase tracking-widest">
+                                    Published
+                                </span>
+                            ) : exam.isLocked ? (
+                                <span className="text-[8px] font-black px-3 py-1 bg-amber-950/20 border border-amber-900/30 text-amber-500 rounded-lg uppercase tracking-widest">
+                                    Graded / Locked
+                                </span>
+                            ) : new Date(exam.dueAt) < new Date() ? (
+                                <span className="text-[8px] font-black px-3 py-1 bg-red-950/20 border border-red-900/30 text-red-500 rounded-lg uppercase tracking-widest">
+                                    Pending Grades
+                                </span>
+                            ) : (
+                                <span className="text-[8px] font-black px-3 py-1 bg-zinc-900 border border-zinc-800 text-zinc-500 rounded-lg uppercase tracking-widest">
+                                    Active / Upcoming
+                                </span>
+                            )}
+                        </div>
 
                         <div className="absolute top-6 right-8">
                             <span className="text-[8px] font-black px-3 py-1 bg-zinc-900 border border-zinc-800 text-zinc-500 rounded-lg uppercase tracking-widest group-hover:border-eduGreen-900/30 transition-all">
@@ -145,13 +176,16 @@ export default function ExamsPage() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <Link href={`/dashboard/teacher/exams/${exam.id}/editor`} passHref>
-                                    <Button variant="outline" className="w-full h-14 border-zinc-800 text-zinc-500 hover:text-white hover:bg-zinc-900 font-black text-[10px] uppercase tracking-widest rounded-2xl">
-                                        Edit Schema
+                                    <Button variant="outline" className="w-full h-14 border-zinc-800 text-zinc-500 hover:text-white hover:bg-zinc-900 font-black text-[10px] uppercase tracking-widest rounded-2xl group/edit overflow-hidden relative">
+                                        <div className="absolute inset-0 bg-purple-500/5 group-hover/edit:bg-purple-500/10 transition-colors" />
+                                        <span className="relative z-10 flex items-center gap-2">
+                                            <Sparkles className="w-3.5 h-3.5 text-purple-500" /> Neural Editor
+                                        </span>
                                     </Button>
                                 </Link>
                                 <Link href={`/dashboard/teacher/gradebook/${exam.id}`} passHref>
                                     <Button className="w-full h-14 bg-zinc-900 border border-zinc-800 text-white font-black text-[10px] uppercase tracking-widest hover:bg-zinc-800 transition-all rounded-2xl group-hover:border-eduGreen-900/20 group-hover:bg-zinc-950">
-                                        Registry Hub <ArrowRight className="ml-2 w-3 h-3 text-eduGreen-500" />
+                                        Registry Hub <Brain className="ml-2 w-3.5 h-3.5 text-eduGreen-500" />
                                     </Button>
                                 </Link>
                             </div>

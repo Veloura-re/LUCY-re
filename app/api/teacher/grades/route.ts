@@ -35,16 +35,12 @@ export async function POST(request: Request) {
             // 1. Save Attendance if provided
             if (attendance && Array.isArray(attendance)) {
                 for (const att of attendance) {
-                    await tx.attendanceRecord.upsert({
+                    await (tx.attendanceRecord as any).upsert({
                         where: {
-                            // We need a unique constraint or we delete/insert
-                            // Since we don't have a unique constraint on [examId, studentId], 
-                            // we'll use a custom delete/insert or use findFirst.
-                            // Better: Add unique constraint to schema later. 
-                            // For now: delete existing for this exam/student pair
-                            id: (await tx.attendanceRecord.findFirst({
-                                where: { examId, studentId: att.studentId }
-                            }))?.id || 'non-existent'
+                            studentId_examId: {
+                                studentId: att.studentId,
+                                examId
+                            }
                         },
                         create: {
                             examId,
@@ -68,40 +64,32 @@ export async function POST(request: Request) {
             // 2. Save Grades
             const savedGrades = [];
             for (const g of grades) { // g can now have: studentId, score, remark, status
-                const attRecord = await tx.attendanceRecord.findFirst({
-                    where: { examId, studentId: g.studentId }
-                });
+                const attStatus = (attendance as any[])?.find((a: any) => a.studentId === g.studentId)?.status;
+                if (attStatus === 'ABSENT') continue;
 
-                if (attRecord?.status === 'ABSENT') continue;
-
-                const existingGrade = await tx.gradeRecord.findFirst({
-                    where: { examId, studentId: g.studentId }
-                });
-
-                let gradeRecord;
-                if (existingGrade) {
-                    gradeRecord = await tx.gradeRecord.update({
-                        where: { id: existingGrade.id },
-                        data: {
-                            score: parseFloat(g.score),
-                            remark: g.remark,
-                            status: g.status || 'SUBMITTED',
-                            createdById: user.id
-                        }
-                    });
-                } else {
-                    gradeRecord = await tx.gradeRecord.create({
-                        data: {
+                const gradeRecord = await (tx.gradeRecord as any).upsert({
+                    where: {
+                        studentId_examId: {
                             studentId: g.studentId,
-                            examId: examId,
-                            subjectId: exam.subjectId,
-                            score: parseFloat(g.score),
-                            remark: g.remark,
-                            status: g.status || 'SUBMITTED',
-                            createdById: user.id,
+                            examId: examId
                         }
-                    });
-                }
+                    },
+                    create: {
+                        studentId: g.studentId,
+                        examId: examId,
+                        subjectId: exam.subjectId,
+                        score: parseFloat(g.score),
+                        remark: g.remark,
+                        status: g.status || 'SUBMITTED',
+                        createdById: user.id,
+                    },
+                    update: {
+                        score: parseFloat(g.score),
+                        remark: g.remark,
+                        status: g.status || 'SUBMITTED',
+                        createdById: user.id
+                    }
+                });
                 savedGrades.push(gradeRecord);
             }
 
@@ -159,7 +147,11 @@ export async function GET(request: Request) {
             where: { examId },
         });
 
-        return NextResponse.json({ exam, graderecords });
+        const attempts = await prisma.examAttempt.findMany({
+            where: { examId }
+        });
+
+        return NextResponse.json({ exam, graderecords, attempts });
 
     } catch (e) {
         return handleApiError(e);

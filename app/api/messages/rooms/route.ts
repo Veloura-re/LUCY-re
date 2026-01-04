@@ -61,6 +61,21 @@ export async function GET(request: Request) {
             if (room.type === ChatRoomType.PRIVATE) {
                 const partnerMember = room.members.find((m: any) => m.userId !== dbUser.id);
                 partner = partnerMember?.user || null;
+
+                // SPECIAL LOGIC: Rename PARENT if viewed by STAFF
+                if (partner && partner.role === 'PARENT' && dbUser.role !== 'PARENT' && dbUser.role !== 'STUDENT') {
+                    const children = await prisma.parentStudentLink.findMany({
+                        where: { parentId: partner.id },
+                        include: { student: true }
+                    });
+                    if (children.length > 0) {
+                        const childNames = children.map(c => c.student.firstName).join(', ');
+                        partner = {
+                            ...partner,
+                            name: `${childNames}'s Parent (${partner.name})`
+                        };
+                    }
+                }
             }
 
             return {

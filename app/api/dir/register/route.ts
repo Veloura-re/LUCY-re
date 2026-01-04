@@ -37,6 +37,36 @@ export async function POST(request: Request) {
                     where: { id: invite.schoolId },
                     data: { status: 'ACTIVE' }
                 });
+
+                // ---------------------------------------------------------
+                // ADD TO WHOLE SCHOOL CHAT
+                // ---------------------------------------------------------
+                // 1. Find or Create "Whole School" Chat Room
+                let wholeSchoolChat = await tx.chatRoom.findFirst({
+                    where: {
+                        schoolId: invite.schoolId,
+                        name: "Whole School",
+                        type: "GROUP"
+                    }
+                });
+
+                if (!wholeSchoolChat) {
+                    wholeSchoolChat = await tx.chatRoom.create({
+                        data: {
+                            schoolId: invite.schoolId,
+                            name: "Whole School",
+                            type: "GROUP",
+                        }
+                    });
+                }
+
+                // 2. Add User to Chat Room
+                await tx.chatRoomMember.create({
+                    data: {
+                        chatRoomId: wholeSchoolChat.id,
+                        userId: user.id
+                    }
+                });
             }
 
             // Burn Token

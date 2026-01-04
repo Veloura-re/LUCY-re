@@ -1,21 +1,38 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
     GraduationCap, BookOpen, Clock, FileText,
     ArrowLeft, TrendingUp, ShieldAlert, MessageSquare,
-    Save, Plus, Trash2, Calendar
+    Save, Plus, Trash2, Calendar, CreditCard
 } from "lucide-react";
 import { SpringingLoader } from "@/components/dashboard/springing-loader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
+import { cn, calculateAge } from "@/lib/utils";
 import { format } from "date-fns";
+import { IDCardModal } from "@/components/dashboard/id-card-modal";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ImageUpload } from "@/components/ui/image-upload";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 export default function StudentProfilePage() {
+    const formatDate = (dateString: any, fmt: string) => {
+        if (!dateString) return "N/A";
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return "N/A";
+            return format(date, fmt);
+        } catch (error) {
+            return "N/A";
+        }
+    };
+
     const { studentId } = useParams();
     const router = useRouter();
     const [data, setData] = useState<any>(null);
@@ -28,22 +45,80 @@ export default function StudentProfilePage() {
     const [isAddingRemark, setIsAddingRemark] = useState(false);
     const [isAddingNote, setIsAddingNote] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [showIDCard, setShowIDCard] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editForm, setEditForm] = useState<any>({});
+    const [gradesData, setGradesData] = useState<any[]>([]); // For class selection
+    const searchParams = useSearchParams();
 
     useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab) setActiveTab(tab);
         fetchStudentData();
-    }, [studentId]);
+    }, [studentId, searchParams]);
 
     const fetchStudentData = async () => {
         try {
             const res = await fetch(`/api/school/students/${studentId}/report-card`);
             const d = await res.json();
             setData(d);
+            setData(d);
             setRemarks(d.remarks || []);
             setNotes(d.internalNotes || []);
+
+            // Pre-fill edit form
+            if (d.student) {
+                setEditForm({
+                    firstName: d.student.firstName,
+                    lastName: d.student.lastName,
+                    email: d.student.email || "",
+                    guardianName: d.student.guardianName || "",
+                    guardianPhone: d.student.guardianPhone || "",
+                    secondaryPhone: d.student.secondaryPhone || "",
+                    photoUrl: d.student.photoUrl || "",
+                    address: d.student.address || "",
+                    dob: d.student.dob && !isNaN(new Date(d.student.dob).getTime()) ? format(new Date(d.student.dob), 'yyyy-MM-dd') : "",
+                    age: d.student.dob && !isNaN(new Date(d.student.dob).getTime()) ? calculateAge(d.student.dob) : "",
+                    gender: d.student.gender || "MALE",
+                    studentCode: d.student.studentCode
+                });
+            }
         } catch (e) {
             console.error(e);
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Fetch grades for class selection if editing
+    const fetchGradesData = async () => {
+        const res = await fetch('/api/school/classes');
+        const d = await res.json();
+        if (d.grades) setGradesData(d.grades);
+    };
+
+    const handleUpdateStudent = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmitting(true);
+        try {
+            const res = await fetch('/api/school/students', {
+                method: 'PUT',
+                body: JSON.stringify({ id: studentId, ...editForm })
+            });
+
+            if (res.ok) {
+                toast.success("Student Dossier Synchronized");
+                setIsEditing(false);
+                fetchStudentData();
+            } else {
+                const errorData = await res.json();
+                toast.error(errorData.error || "Uplink Failure: Mutation Rejected");
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error("Neural Link Failure: Request Timed Out");
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -92,6 +167,13 @@ export default function StudentProfilePage() {
 
     const { student, grades, attendance } = data;
 
+    const getPerformanceColor = (pct: number) => {
+        if (pct >= 80) return { text: "text-emerald-500", border: "border-emerald-900/30", bg: "bg-emerald-900/10" };
+        if (pct >= 60) return { text: "text-blue-500", border: "border-blue-900/30", bg: "bg-blue-900/10" };
+        if (pct >= 40) return { text: "text-amber-500", border: "border-amber-900/30", bg: "bg-amber-900/10" };
+        return { text: "text-rose-500", border: "border-rose-900/30", bg: "bg-rose-900/10" };
+    };
+
     return (
         <div className="space-y-10 animate-in fade-in duration-700 pb-20">
             {/* Header / Navigation */}
@@ -107,8 +189,92 @@ export default function StudentProfilePage() {
                     <Button className="bg-eduGreen-600 hover:bg-eduGreen-500 text-white rounded-xl font-black uppercase text-[10px] tracking-widest h-12 px-6">
                         Export Full Dossier
                     </Button>
+                    <Button
+                        onClick={() => { setIsEditing(true); fetchGradesData(); }}
+                        className="bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl font-black uppercase text-[10px] tracking-widest h-12 px-6"
+                    >
+                        Edit Profile
+                    </Button>
+                    <Button
+                        onClick={() => setShowIDCard(true)}
+                        className="bg-zinc-100 hover:bg-white text-zinc-900 rounded-xl font-black uppercase text-[10px] tracking-widest h-12 px-6"
+                    >
+                        <CreditCard className="w-4 h-4 mr-2" /> Generate ID
+                    </Button>
                 </div>
             </div>
+
+            <IDCardModal
+                isOpen={showIDCard}
+                onClose={() => setShowIDCard(false)}
+                user={student}
+                type="STUDENT"
+                schoolName={student.school?.name}
+                schoolAddress={student.school?.address}
+            />
+
+            <Dialog open={isEditing} onOpenChange={setIsEditing}>
+                <DialogContent className="bg-zinc-950 border-zinc-900 text-white max-w-2xl rounded-[2.5rem]">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl font-black italic">Edit Student Profile</DialogTitle>
+                        <DialogDescription className="text-zinc-500 font-bold uppercase tracking-widest text-[10px]">Update registry information</DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleUpdateStudent} className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                        <div className="md:col-span-2 flex justify-center py-4 bg-zinc-900/30 rounded-2xl">
+                            <ImageUpload value={editForm.photoUrl} onChange={(url) => setEditForm({ ...editForm, photoUrl: url })} bucket="avatars" />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-2">First Name</label>
+                            <Input value={editForm.firstName} onChange={e => setEditForm({ ...editForm, firstName: e.target.value })} className="bg-zinc-900 border-zinc-800 rounded-xl" />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-2">Last Name</label>
+                            <Input value={editForm.lastName} onChange={e => setEditForm({ ...editForm, lastName: e.target.value })} className="bg-zinc-900 border-zinc-800 rounded-xl" />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-2">Email</label>
+                            <Input value={editForm.email} onChange={e => setEditForm({ ...editForm, email: e.target.value })} className="bg-zinc-900 border-zinc-800 rounded-xl" />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-2">Date of Birth</label>
+                            <Input type="date" value={editForm.dob} onChange={e => setEditForm({ ...editForm, dob: e.target.value })} className="bg-zinc-900 border-zinc-800 rounded-xl" />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-2">Guardian Name</label>
+                            <Input value={editForm.guardianName} onChange={e => setEditForm({ ...editForm, guardianName: e.target.value })} className="bg-zinc-900 border-zinc-800 rounded-xl" />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-2">Guardian Phone</label>
+                            <Input value={editForm.guardianPhone} onChange={e => setEditForm({ ...editForm, guardianPhone: e.target.value })} className="bg-zinc-900 border-zinc-800 rounded-xl" />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-2">Secondary Phone (Optional)</label>
+                            <Input value={editForm.secondaryPhone} onChange={e => setEditForm({ ...editForm, secondaryPhone: e.target.value })} className="bg-zinc-900 border-zinc-800 rounded-xl" />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-2">Edit Age (Auto-calculates DOB)</label>
+                            <Input
+                                type="number"
+                                value={editForm.age}
+                                onChange={e => {
+                                    const age = e.target.value;
+                                    const dob = format(new Date(new Date().getFullYear() - parseInt(age || "0"), 0, 1), 'yyyy-MM-dd');
+                                    setEditForm({ ...editForm, age, dob });
+                                }}
+                                placeholder="Enter Age"
+                                className="bg-zinc-900 border-zinc-800 rounded-xl"
+                            />
+                        </div>
+
+                        <div className="md:col-span-2 flex justify-end gap-3 mt-4">
+                            <Button type="button" variant="ghost" onClick={() => setIsEditing(false)} className="text-zinc-500 hover:text-white font-black uppercase text-[10px] tracking-widest">Cancel</Button>
+                            <Button type="submit" isLoading={submitting} className="bg-eduGreen-600 hover:bg-eduGreen-500 text-white font-black uppercase text-[10px] tracking-widest rounded-xl px-8">Save Changes</Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
 
             {/* Profile Info Card */}
             <Card className="bg-zinc-950/40 backdrop-blur-2xl border-zinc-900 rounded-[3rem] overflow-hidden border-t-zinc-800/20">
@@ -141,7 +307,7 @@ export default function StudentProfilePage() {
                             </div>
                             <div className="flex items-center gap-2">
                                 <Calendar className="w-4 h-4 text-blue-700" />
-                                <span>Enrolled: {format(new Date(student.createdAt), 'MMM yyyy')}</span>
+                                <span>Enrolled: {formatDate(student.createdAt, 'MMM yyyy')} • {calculateAge(student.dob)}Y</span>
                             </div>
                         </div>
                     </div>
@@ -153,10 +319,7 @@ export default function StudentProfilePage() {
                                 {attendance.total > 0 ? Math.round((attendance.present / attendance.total) * 100) : 0}%
                             </div>
                         </div>
-                        <div className="p-6 bg-zinc-900/40 rounded-3xl border border-zinc-800/80 text-center">
-                            <div className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-1">GPA Proxy</div>
-                            <div className="text-2xl font-black text-eduGreen-500 italic">3.8</div>
-                        </div>
+
                     </div>
                 </div>
             </Card>
@@ -253,13 +416,20 @@ export default function StudentProfilePage() {
                                                 </div>
                                                 <div className="flex items-center gap-8">
                                                     <div className="text-right">
-                                                        <div className="text-[10px] font-black text-zinc-700 uppercase tracking-widest mb-1">{format(new Date(grade.createdAt), 'MMM dd')}</div>
+                                                        <div className="text-[10px] font-black text-zinc-700 uppercase tracking-widest mb-1">{formatDate(grade.createdAt, 'MMM dd')}</div>
                                                         <div className="inline-flex items-center gap-2 px-3 py-1 bg-zinc-950 rounded-lg border border-zinc-900 text-[9px] font-black uppercase text-zinc-500">
                                                             {grade.status}
                                                         </div>
                                                     </div>
-                                                    <div className="w-16 h-16 rounded-2xl bg-zinc-950 border border-zinc-900 flex items-center justify-center text-xl font-black text-eduGreen-500 italic shadow-inner">
-                                                        {grade.score}
+                                                    <div className={cn(
+                                                        "w-16 h-16 rounded-2xl bg-zinc-950 border flex flex-col items-center justify-center font-black italic shadow-inner",
+                                                        grade.exam?.totalMarks ? getPerformanceColor((parseFloat(grade.score) / grade.exam.totalMarks) * 100).border : "border-zinc-900"
+                                                    )}>
+                                                        <span className={cn(
+                                                            "text-xl",
+                                                            grade.exam?.totalMarks ? getPerformanceColor((parseFloat(grade.score) / grade.exam.totalMarks) * 100).text : "text-eduGreen-500"
+                                                        )}>{grade.score}</span>
+                                                        {grade.exam?.totalMarks && <span className="text-[9px] text-zinc-600 not-italic">/ {grade.exam.totalMarks}</span>}
                                                     </div>
                                                 </div>
                                             </div>
@@ -373,7 +543,7 @@ export default function StudentProfilePage() {
                                                         <div className="text-[8px] font-bold text-zinc-700 uppercase tracking-widest">Authorized Faculty</div>
                                                     </div>
                                                 </div>
-                                                <div className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">{format(new Date(r.createdAt), 'MMM yyyy')}</div>
+                                                <div className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">{formatDate(r.createdAt, 'MMM yyyy')}</div>
                                             </div>
                                             <p className="text-sm font-bold text-zinc-400 leading-relaxed italic pr-12">"{r.content}"</p>
                                             <div className="absolute bottom-6 right-8 text-[8px] font-black text-eduGreen-600/50 uppercase tracking-[0.2em]">Validated Node</div>
@@ -443,7 +613,7 @@ export default function StudentProfilePage() {
                                                         <div className="text-[8px] font-bold text-zinc-700 uppercase tracking-widest">Reporting Official</div>
                                                     </div>
                                                 </div>
-                                                <div className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">{format(new Date(n.createdAt), 'MMM dd, HH:mm')}</div>
+                                                <div className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">{formatDate(n.createdAt, 'MMM dd, HH:mm')}</div>
                                             </div>
                                             <p className="text-sm font-bold text-zinc-400 leading-relaxed italic pr-12">{n.content}</p>
                                             <div className="absolute top-8 right-8 text-eduGreen-500/20">

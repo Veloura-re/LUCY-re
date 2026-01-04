@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
+import { sendAssessmentReportEmail } from "@/lib/email";
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
     const supabase = await createClient();
@@ -12,7 +13,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
     try {
         const body = await req.json();
-        const { questions, isLocked, title, duration } = body;
+        const { questions, isLocked, isPublished, title, duration, config } = body;
 
         // Verify ownership?
         const exam = await prisma.exam.findUnique({ where: { id: params.id } });
@@ -24,12 +25,57 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
             data: {
                 questions: questions ?? undefined,
                 isLocked: isLocked ?? undefined,
+                isPublished: isPublished ?? undefined,
                 title: title ?? undefined,
                 duration: duration ?? undefined,
-                // Automatically config max score based on questions? 
-                // Currently config is separate.
-            }
+                config: config ?? undefined,
+            } as any,
+            include: { subject: true }
         });
+
+        // NOTIFICATION LOGIC: Trigger if just published
+        if (isPublished === true && !(exam as any).isPublished) {
+            console.log(`[EXAM_PUBLISH] Triggering notifications for Exam: ${updated.id}`);
+
+            // Fetch all students in the class and their grades/attendance for this exam
+            const students = await prisma.student.findMany({
+                where: { classId: updated.classId },
+                include: {
+                    parentLinks: { include: { parent: true } },
+                    gradeRecords: { where: { examId: params.id } },
+                    attendanceRecords: { where: { examId: params.id } }
+                }
+            });
+
+            const maxScore = (updated.config as any)?.maxScore || 100;
+
+            console.log(`[EXAM_PUBLISH] Notifying ${students.length} students/parents.`);
+
+            for (const student of students) {
+                const grade = student.gradeRecords[0];
+                const att = student.attendanceRecords[0];
+                const studentName = `${student.firstName} ${student.lastName}`;
+
+                // If neither grade nor attendance found, skip (unlikely if graded properly)
+                if (!grade && !att) continue;
+
+                for (const link of student.parentLinks) {
+                    if (link.parent.email) {
+                        // Background send-off
+                        sendAssessmentReportEmail(
+                            link.parent.email,
+                            studentName,
+                            updated.title,
+                            (updated as any).subject.name,
+                            grade?.score || 0,
+                            maxScore,
+                            att?.status || 'PRESENT',
+                            grade?.remark || undefined
+                        ).catch(err => console.error(`Failed to notify parent of student ${student.id}:`, err));
+                    }
+                }
+            }
+        }
 
         return NextResponse.json({ exam: updated });
     } catch (e) {

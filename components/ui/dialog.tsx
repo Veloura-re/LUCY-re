@@ -143,6 +143,15 @@ export function DialogDescription({ children, className }: any) {
     );
 }
 
+export function DialogClose({ children, asChild }: any) {
+    const { setIsOpen } = React.useContext(DialogContext);
+    return (
+        <div onClick={() => setIsOpen(false)} className="inline-block cursor-pointer">
+            {children}
+        </div>
+    );
+}
+
 export function DialogFooter({ children, className }: any) {
     return (
         <div className={cn("flex flex-col sm:flex-row gap-3 mt-6", className)}>

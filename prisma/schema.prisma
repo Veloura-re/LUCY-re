@@ -20,6 +20,12 @@ model User {
   preferences        Json?               @default("{\"neuralSync\": true, \"analyticExport\": false, \"immersiveVisuals\": true}")
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
+
+  // New Fields for Teacher Profile
+  teacherCode        String?             @unique
+  phone              String?
+  qualification      String?
+  photoUrl           String?
   attendanceRecords  AttendanceRecord[]
   lockedAttendance   AttendanceRecord[]  @relation("AttendanceLockedBy")
   auditLogs          AuditLog[]
@@ -40,6 +46,9 @@ model User {
   timetable          Timetable[]
   createdLessons     Lesson[]
   school             School?             @relation(fields: [schoolId], references: [id])
+  bookRequests       BookRequest[]
+  resourceProgress   ResourceProgress[]
+  marklistConfigs    MarklistConfig[]
 }
 
 model School {
@@ -51,6 +60,7 @@ model School {
   createdAt        DateTime     @default(now())
   attendanceConfig Json?        @default("{\"type\": \"PERIOD\", \"lockAfterMinutes\": 30, \"enableLateMarking\": true}")
   logoUrl          String?
+  address          String?      @db.Text
   chatRooms        ChatRoom[]
   events           Event[]
   grades           Grade[]
@@ -61,6 +71,10 @@ model School {
   users            User[]
   feeStructures    FeeStructure[]
   invoices         Invoice[]
+  books            Book[]
+  bookRequests     BookRequest[]
+  unitPacks        UnitPack[]
+  marklistConfigs  MarklistConfig[]
 }
 
 model Grade {
@@ -72,10 +86,12 @@ model Grade {
   school   School    @relation(fields: [schoolId], references: [id])
   students Student[]
   feeStructures FeeStructure[]
+  books         Book[]
 }
 
 model Class {
   id                 String              @id @default(uuid())
+  books              Book[]
   gradeId            String
   name               String
   homeroomTeacherId  String?
@@ -89,10 +105,12 @@ model Class {
   teacherAssignments TeacherAssignment[]
   timetable          Timetable[]
   lessons            Lesson[]
+  marklistConfigs    MarklistConfig[]
 }
 
 model Subject {
   id                 String              @id @default(uuid())
+  books              Book[]
   schoolId           String
   name               String
   attendanceRecords  AttendanceRecord[]
@@ -102,6 +120,7 @@ model Subject {
   teacherAssignments TeacherAssignment[]
   timetable          Timetable[]
   lessons            Lesson[]
+  marklistConfigs    MarklistConfig[]
 }
 
 model TeacherAssignment {
@@ -126,6 +145,16 @@ model Student {
   studentCode       String              @unique
   dob               DateTime?
   enrollmentStatus  EnrollmentStatus    @default(ACTIVE)
+
+  // New Enhanced Fields
+  gender            Gender?
+  photoUrl          String?
+  address           String?             @db.Text
+  guardianName      String?
+  guardianPhone     String?
+  secondaryPhone    String?
+  guardianRelation  String?
+  grandfatherName   String?
   attendanceRecords AttendanceRecord[]
   certificates      Certificate[]
   examAttempts      ExamAttempt[]
@@ -138,6 +167,7 @@ model Student {
   user              User?               @relation(fields: [userId], references: [id])
   remarks           StudentRemark[]
   invoices          Invoice[]
+  marklistEntries   MarklistEntry[]
 }
 
 model ParentStudentLink {
@@ -162,8 +192,14 @@ model Exam {
   config            Json?
   questions         Json?
   isLocked          Boolean            @default(false)
+  isPublished       Boolean            @default(false)
   lockedAt          DateTime?
   lockedById        String?
+
+  // Enhanced Marklist Fields
+  category          ExamCategory       @default(TEST)
+  totalMarks        Float              @default(100)
+  description       String?            @db.Text
   attendanceRecords AttendanceRecord[]
   class             Class              @relation(fields: [classId], references: [id])
   createdBy         User               @relation(fields: [createdById], references: [id])
@@ -182,6 +218,7 @@ model ExamAttempt {
   score       Decimal?
   answers     Json?
   status      String?
+  metadata    Json?
   exam        Exam      @relation(fields: [examId], references: [id])
   student     Student   @relation(fields: [studentId], references: [id])
 }
@@ -200,6 +237,8 @@ model GradeRecord {
   exam        Exam?       @relation(fields: [examId], references: [id])
   student     Student     @relation(fields: [studentId], references: [id])
   subject     Subject     @relation(fields: [subjectId], references: [id])
+
+  @@unique([studentId, examId])
 }
 
 model AttendanceRecord {
@@ -229,6 +268,7 @@ model AttendanceRecord {
   @@index([classId])
   @@index([examId])
   @@index([date])
+  @@unique([studentId, examId]) // Ensure only one attendance record per student per exam
 }
 
 model Message {
@@ -445,6 +485,22 @@ enum GradeStatus {
   REMARKED
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum ExamCategory {
+  QUIZ
+  TEST
+  ASSIGNMENT
+  MID_TERM
+  FINAL_EXAM
+  PROJECT
+  OTHER
+}
+
 model FeeStructure {
   id          String      @id @default(uuid())
   schoolId    String
@@ -566,4 +622,178 @@ model Lesson {
   @@index([classId])
   @@index([date])
   @@index([teacherId])
+}
+
+model Book {
+  id           String   @id @default(uuid())
+  schoolId     String
+  gradeId      String
+  classId      String   // The specific Class Section
+  subjectId    String
+  title        String
+  fileUrl      String
+  author       String?
+  academicYear String?
+  edition      String?
+  description  String?
+  
+  // Governance & Logic
+  expiresAt      DateTime?
+  prerequisiteId String?
+  teacherNote    String?   @db.Text
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  school       School             @relation(fields: [schoolId], references: [id])
+  grade        Grade              @relation(fields: [gradeId], references: [id])
+  class        Class              @relation(fields: [classId], references: [id])
+  subject      Subject            @relation(fields: [subjectId], references: [id])
+  prerequisite Book?              @relation("Prerequisites", fields: [prerequisiteId], references: [id])
+  dependents   Book[]             @relation("Prerequisites")
+  progress     ResourceProgress[]
+  unitPacks    UnitPackResource[]
+
+  @@index([schoolId])
+  @@index([classId])
+  @@index([subjectId])
+}
+
+model BookRequest {
+  id        String        @id @default(uuid())
+  schoolId  String
+  userId    String
+  title     String
+  subject   String?
+  grade     String?
+  reason    String?       @db.Text
+  status    RequestStatus @default(PENDING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  school School @relation(fields: [schoolId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([schoolId])
+  @@index([userId])
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  FULFILLED
+}
+
+model UnitPack {
+  id          String   @id @default(uuid())
+  schoolId    String
+  title       String
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  school    School             @relation(fields: [schoolId], references: [id])
+  resources UnitPackResource[]
+
+  @@index([schoolId])
+}
+
+model UnitPackResource {
+  id         String @id @default(uuid())
+  unitPackId String
+  bookId     String
+  order      Int    @default(0)
+
+  unitPack UnitPack @relation(fields: [unitPackId], references: [id], onDelete: Cascade)
+  book     Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@index([unitPackId])
+  @@index([bookId])
+}
+
+model ResourceProgress {
+  id        String   @id @default(uuid())
+  userId    String
+  bookId    String
+  completed Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, bookId])
+}
+
+// ==========================================
+// DYNAMIC MARKLIST CONFIGURATION
+// ==========================================
+
+model MarklistConfig {
+  id        String   @id @default(uuid())
+  schoolId  String
+  classId   String
+  subjectId String
+  teacherId String? 
+  
+  isLocked  Boolean  @default(false)
+  status    String   @default("DRAFT") // DRAFT, PUBLISHED, ARCHIVED
+  
+  columns   MarklistColumn[]
+  entries   MarklistEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  school    School   @relation(fields: [schoolId], references: [id])
+  class     Class    @relation(fields: [classId], references: [id])
+  subject   Subject  @relation(fields: [subjectId], references: [id])
+  teacher   User?    @relation(fields: [teacherId], references: [id])
+
+  @@unique([classId, subjectId]) 
+  @@index([schoolId])
+}
+
+model MarklistColumn {
+  id             String         @id @default(uuid())
+  configId       String
+  title          String
+  maxMarks       Float
+  order          Int            @default(0)
+  isOptional     Boolean        @default(false)
+  
+  config         MarklistConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+  marks          MarklistMark[]
+
+  @@index([configId])
+}
+
+model MarklistEntry {
+  id        String   @id @default(uuid())
+  configId  String
+  studentId String
+  
+  // Cached calculations
+  total     Float?
+  percentage Float?
+  grade     String?
+  remarks   String?
+
+  config    MarklistConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+  student   Student        @relation(fields: [studentId], references: [id])
+  marks     MarklistMark[] 
+
+  @@unique([configId, studentId])
+}
+
+model MarklistMark {
+  id        String   @id @default(uuid())
+  entryId   String 
+  columnId  String 
+  score     Float
+  
+  entry     MarklistEntry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  column    MarklistColumn @relation(fields: [columnId], references: [id], onDelete: Cascade)
+
+  @@unique([entryId, columnId])
 }

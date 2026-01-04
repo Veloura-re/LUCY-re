@@ -25,6 +25,15 @@ export async function GET(request: Request) {
             orderBy: { createdAt: 'desc' }
         });
 
+        // Fetch ExamAttempts for these exams to get detailed feedback
+        const examIds = records.map(r => r.examId).filter(Boolean) as string[];
+        const attempts = await prisma.examAttempt.findMany({
+            where: {
+                studentId: dbUser.student.id,
+                examId: { in: examIds }
+            }
+        });
+
         // Group by Subject
         const grouped: any = {};
         records.forEach(r => {
@@ -37,15 +46,24 @@ export async function GET(request: Request) {
                     totalMax: 0
                 };
             }
-            // If exam linked, use exam config for max score, else 100
+
             const max = r.exam?.config ? (r.exam.config as any).maxScore || 100 : 100;
+            const attempt = attempts.find(a => a.examId === r.examId);
 
             grouped[r.subjectId].exams.push({
                 id: r.id,
                 title: r.exam?.title || "Assignment",
                 date: r.createdAt,
                 score: r.score,
-                maxScore: max
+                maxScore: max,
+                remark: r.remark,
+                // Attached attempt data for the "Insight" view
+                attempt: attempt ? {
+                    id: attempt.id,
+                    answers: attempt.answers,
+                    metadata: (attempt as any).metadata,
+                    questions: r.exam?.questions // Include questions context
+                } : null
             });
 
             grouped[r.subjectId].totalScore += Number(r.score);

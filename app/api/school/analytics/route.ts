@@ -16,28 +16,51 @@ export async function GET(request: Request) {
     if (!dbUser?.schoolId) return NextResponse.json({ error: 'No school linked' }, { status: 400 });
 
     try {
-        // 1. Attendance Trends (Last 7 Days)
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        // 1. Attendance Trends (Last 7 Days - Normalized)
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            d.setHours(0, 0, 0, 0);
+            days.push(d);
+        }
 
-        const attendance = await prisma.attendanceRecord.groupBy({
-            by: ['date', 'status'],
-            where: {
-                class: { grade: { schoolId: dbUser.schoolId } },
-                date: { gte: sevenDaysAgo }
-            },
-            _count: { id: true }
-        });
+        const attendanceData = await Promise.all(days.map(async (day) => {
+            const nextDay = new Date(day);
+            nextDay.setDate(nextDay.getDate() + 1);
+
+            const counts = await (prisma.attendanceRecord as any).groupBy({
+                by: ['status'],
+                where: {
+                    class: { grade: { schoolId: dbUser.schoolId as string } },
+                    date: {
+                        gte: day,
+                        lt: nextDay
+                    }
+                },
+                _count: { id: true }
+            }) as any[];
+
+            const present = counts.find((c: any) => c.status === 'PRESENT' || c.status === 'LATE')?._count?.id || 0;
+            const absent = counts.find((c: any) => c.status === 'ABSENT')?._count?.id || 0;
+            const total = present + absent;
+
+            return {
+                date: day.toISOString(),
+                percentage: total > 0 ? (present / total) * 100 : 100,
+                total
+            };
+        }));
 
         // 2. Grade Distribution (Mean scores per subject)
-        const gradeStats = await prisma.gradeRecord.groupBy({
+        const gradeStats = await (prisma.gradeRecord as any).groupBy({
             by: ['subjectId'],
             where: {
-                subject: { schoolId: dbUser.schoolId }
+                subject: { schoolId: dbUser.schoolId as string }
             },
             _avg: { score: true },
             _count: { id: true }
-        });
+        }) as any[];
 
         // Resolve subject names
         const subjects = await prisma.subject.findMany({
@@ -47,7 +70,7 @@ export async function GET(request: Request) {
 
         const performanceBySubject = gradeStats.map(s => ({
             name: subjects.find(sub => sub.id === s.subjectId)?.name || 'Unknown',
-            avg: s._avg.score,
+            avg: s._avg.score || 0,
             count: s._count.id
         }));
 
@@ -72,8 +95,10 @@ export async function GET(request: Request) {
             }
         });
 
+        const lastSevenDays = days[0];
+
         const recentEvents = await prisma.event.count({
-            where: { schoolId: dbUser.schoolId, eventDate: { gte: sevenDaysAgo } }
+            where: { schoolId: dbUser.schoolId, eventDate: { gte: lastSevenDays } }
         });
 
         const studentCount = await prisma.student.count({
@@ -107,7 +132,7 @@ export async function GET(request: Request) {
 
         return NextResponse.json({
             summary,
-            attendance,
+            attendance: attendanceData,
             performanceBySubject,
             teacherWorkload: teacherWorkload.map(t => ({
                 name: t.name,

@@ -8,7 +8,7 @@ export async function POST(request: Request) {
 
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { classId, subjectId, title, date, maxScore } = await request.json();
+    const { classId, subjectId, title, date, maxScore, questions } = await request.json();
 
     try {
         const exam = await prisma.exam.create({
@@ -17,8 +17,9 @@ export async function POST(request: Request) {
                 classId,
                 subjectId,
                 createdById: user.id,
+                questions: questions ?? [],
                 dueAt: date ? new Date(date) : undefined,
-                config: { maxScore: parseInt(maxScore) || 100 } // Storing maxScore in config for now
+                config: { maxScore: parseInt(maxScore) || 100 }
             }
         });
         return NextResponse.json({ exam });

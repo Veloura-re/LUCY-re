@@ -5,8 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { User, Shield, Bell, Zap, LogOut, Loader2 } from "lucide-react";
+import { User, Shield, Zap, LogOut, Lock, MapPin } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { SpringingLoader } from "@/components/dashboard/springing-loader";
@@ -19,7 +18,7 @@ export default function SettingsPage() {
     const [saving, setSaving] = useState(false);
     const [userData, setUserData] = useState<any>(null);
     const [schoolData, setSchoolData] = useState<any>(null);
-    const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications' | 'school'>('profile');
+    const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'school'>('profile');
     const [formData, setFormData] = useState({
         name: "",
         bio: "",
@@ -36,7 +35,8 @@ export default function SettingsPage() {
     const [schoolForm, setSchoolForm] = useState({
         name: "",
         schoolCode: "",
-        logoUrl: ""
+        logoUrl: "",
+        address: ""
     });
 
     const [passwordData, setPasswordData] = useState({
@@ -89,7 +89,8 @@ export default function SettingsPage() {
                 setSchoolForm({
                     name: data.school.name,
                     schoolCode: data.school.schoolCode,
-                    logoUrl: data.school.logoUrl || ""
+                    logoUrl: data.school.logoUrl || "",
+                    address: data.school.address || ""
                 });
             }
         } catch (e) {
@@ -214,15 +215,7 @@ export default function SettingsPage() {
         router.push('/login');
     };
 
-    const updatePreference = (key: string, value: boolean) => {
-        setFormData(prev => ({
-            ...prev,
-            preferences: {
-                ...prev.preferences,
-                [key]: value
-            }
-        }));
-    };
+
 
     if (loading) {
         return (
@@ -258,7 +251,6 @@ export default function SettingsPage() {
                     {[
                         { id: 'profile', icon: User, label: "Profile Identity" },
                         { id: 'security', icon: Shield, label: "Security Layer" },
-                        { id: 'notifications', icon: Bell, label: "Signal Feed" },
                         ...(userData?.role === 'PRINCIPAL' || userData?.role === 'SUPERADMIN' ? [
                             { id: 'school', icon: Zap, label: "Institutional Hub" }
                         ] : [])
@@ -321,17 +313,7 @@ export default function SettingsPage() {
                                     />
                                 </div>
 
-                                <div className="p-6 bg-eduGreen-950/10 border border-eduGreen-900/20 rounded-[2rem] flex items-center justify-between">
-                                    <div>
-                                        <p className="font-black text-zinc-100 text-sm tracking-tight">Immersive Visuals</p>
-                                        <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest leading-none mt-1">Advanced shaders & glassmorphism</p>
-                                    </div>
-                                    <Switch
-                                        checked={(formData.preferences as any).immersiveVisuals}
-                                        onCheckedChange={(checked) => updatePreference('immersiveVisuals', checked)}
-                                        className="data-[state=checked]:bg-eduGreen-600"
-                                    />
-                                </div>
+
                             </CardContent>
                         </Card>
                     )}
@@ -397,34 +379,7 @@ export default function SettingsPage() {
                         </Card>
                     )}
 
-                    {activeTab === 'notifications' && (
-                        <Card className="bg-zinc-950/40 backdrop-blur-xl border-zinc-900/50 hover:border-eduGreen-900/30 transition-all rounded-[2.5rem] overflow-hidden group shadow-2xl border-t-zinc-800/20">
-                            <CardHeader className="p-8 pb-4">
-                                <CardTitle className="text-2xl font-black text-zinc-100 tracking-tight leading-tight">Signal Feed</CardTitle>
-                                <CardDescription className="text-zinc-600 font-bold uppercase tracking-widest text-[9px] mt-1">Communication and alert preferences</CardDescription>
-                            </CardHeader>
-                            <CardContent className="p-8 pt-6 space-y-4">
-                                {[
-                                    { title: "Universal Neural Sync", desc: "Real-time master notification relay", key: "neuralSync" },
-                                    { title: "Email Alert Matrix", desc: "Asynchronous updates for critical events", key: "emailAlerts" },
-                                    { title: "Dynamic Push Signals", desc: "Mobile and desktop persistent alerts", key: "pushSignals" },
-                                    { title: "Chat Audio Feedback", desc: "Auditory signaling for new messages", key: "chatSounds" },
-                                ].map((item, i) => (
-                                    <div key={i} className="flex items-center justify-between p-6 bg-zinc-900/40 rounded-[2rem] border border-zinc-900 hover:border-zinc-800 transition-all">
-                                        <div className="space-y-1">
-                                            <p className="font-black text-zinc-100 tracking-tight text-sm uppercase">{item.title}</p>
-                                            <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest leading-none">{item.desc}</p>
-                                        </div>
-                                        <Switch
-                                            checked={(formData.preferences as any)[item.key]}
-                                            onCheckedChange={(checked) => updatePreference(item.key, checked)}
-                                            className="data-[state=checked]:bg-eduGreen-600"
-                                        />
-                                    </div>
-                                ))}
-                            </CardContent>
-                        </Card>
-                    )}
+
 
                     {activeTab === 'school' && (
                         <div className="space-y-8">
@@ -449,11 +404,88 @@ export default function SettingsPage() {
                                         </div>
                                         <div className="space-y-3">
                                             <Label className="text-[10px] font-black text-zinc-700 uppercase tracking-[0.3em] ml-2">Internal Organization Code</Label>
-                                            <Input
-                                                value={schoolForm.schoolCode}
-                                                onChange={(e) => setSchoolForm(prev => ({ ...prev, schoolCode: e.target.value.toUpperCase() }))}
-                                                className="bg-zinc-900/30 border-zinc-800 text-eduGreen-500 h-14 rounded-2xl border-2 font-mono tracking-[0.2em] font-black focus:border-eduGreen-600 transition-all"
-                                            />
+                                            <div className="relative group">
+                                                <Input
+                                                    disabled
+                                                    value={schoolForm.schoolCode}
+                                                    className="bg-zinc-950/50 border-zinc-800 text-eduGreen-500 h-14 rounded-2xl border-2 font-mono tracking-[0.2em] font-black cursor-not-allowed opacity-60 pl-12"
+                                                />
+                                                <Lock className="w-4 h-4 text-zinc-700 absolute left-4 top-1/2 -translate-y-1/2 group-hover:text-eduGreen-500 transition-colors" />
+                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[8px] font-black text-zinc-800 uppercase tracking-widest bg-zinc-900 px-2 py-1 rounded-lg border border-zinc-800">
+                                                    Immutable
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3 mt-8">
+                                        <Label className="text-[10px] font-black text-zinc-700 uppercase tracking-[0.3em] ml-2">Physical Headquarters Address</Label>
+                                        <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between items-center">
+                                                    <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Supports Address or GPS Coordinates (Lat,Lng)</p>
+                                                    {schoolForm.address && (
+                                                        <a
+                                                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(schoolForm.address)}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-[9px] font-black text-eduGreen-500 uppercase tracking-widest hover:underline flex items-center gap-1"
+                                                        >
+                                                            <MapPin className="w-3 h-3" />
+                                                            Open Satellite View
+                                                        </a>
+                                                    )}
+                                                </div>
+                                                <textarea
+                                                    className="w-full bg-zinc-900/30 border-zinc-800 text-white p-6 rounded-[2rem] focus:border-eduGreen-600 transition-all border-2 font-bold text-sm min-h-[100px] resize-none outline-none"
+                                                    value={schoolForm.address}
+                                                    onChange={(e) => setSchoolForm(prev => ({ ...prev, address: e.target.value }))}
+                                                    placeholder="Enter institutional address or coordinates..."
+                                                />
+                                            </div>
+
+                                            <div className="w-full h-72 rounded-[2rem] overflow-hidden border-2 border-zinc-800 bg-zinc-950 relative shadow-2xl group transition-all hover:border-eduGreen-900/30">
+                                                {schoolForm.address ? (
+                                                    <>
+                                                        <iframe
+                                                            width="100%"
+                                                            height="100%"
+                                                            className="w-full h-full invert grayscale opacity-60 group-hover:invert-0 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-1000 ease-out scale-100 group-hover:scale-105"
+                                                            frameBorder="0"
+                                                            scrolling="no"
+                                                            marginHeight={0}
+                                                            marginWidth={0}
+                                                            src={`https://maps.google.com/maps?q=${encodeURIComponent(schoolForm.address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                                                        ></iframe>
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent opacity-80 pointer-events-none" />
+                                                        <div className="absolute top-4 right-4 bg-zinc-950/90 backdrop-blur-md px-4 py-2 rounded-xl border border-zinc-800 text-[9px] font-black uppercase tracking-widest text-eduGreen-500 shadow-xl pointer-events-none flex items-center gap-2 z-10">
+                                                            <span className="relative flex h-2 w-2">
+                                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-eduGreen-400 opacity-75"></span>
+                                                                <span className="relative inline-flex rounded-full h-2 w-2 bg-eduGreen-500"></span>
+                                                            </span>
+                                                            Live Feed
+                                                        </div>
+                                                        <div className="absolute bottom-6 left-6 z-10">
+                                                            <div className="flex items-center gap-3 bg-zinc-950/90 backdrop-blur-md px-5 py-3 rounded-2xl border border-zinc-800 shadow-xl">
+                                                                <div className="w-10 h-10 rounded-xl bg-eduGreen-950/30 border border-eduGreen-900/50 flex items-center justify-center">
+                                                                    <MapPin className="w-5 h-5 text-eduGreen-500" />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-0.5">Verified Location</p>
+                                                                    <p className="text-xs font-black text-white tracking-tight max-w-[200px] truncate">{schoolForm.address}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <div className="w-full h-full flex flex-col items-center justify-center text-zinc-800 space-y-4">
+                                                        <div className="w-16 h-16 rounded-full bg-zinc-900/50 flex items-center justify-center animate-pulse">
+                                                            <MapPin className="w-8 h-8 text-zinc-800" />
+                                                        </div>
+                                                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-700">Awaiting Geo-Coordinates</p>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
 

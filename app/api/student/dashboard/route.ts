@@ -122,6 +122,7 @@ export async function GET(req: Request) {
 
         return NextResponse.json({
             studentName: `${student.firstName} ${student.lastName}`,
+            student,
             currentLesson: activeLesson,
             attendance: attendancePct,
             nextExam: nextExam ? {

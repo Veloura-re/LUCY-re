@@ -8,9 +8,17 @@ import { Role } from '@prisma/client';
 // GET: List all students in the school
 export async function GET(request: Request) {
     try {
-        // [SECURITY] Any staff can view list? Or just teachers/admins?
-        // Allowing all staff for now to enable directory features, but strictly linked to their school.
         const user = await requireSchoolLinked();
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+
+        if (id) {
+            const student = await prisma.student.findUnique({
+                where: { id },
+                include: { grade: true, class: true }
+            });
+            return NextResponse.json({ student });
+        }
 
         const students = await prisma.student.findMany({
             where: { schoolId: user.schoolId },
@@ -27,7 +35,11 @@ export async function GET(request: Request) {
             },
             orderBy: { lastName: 'asc' }
         });
-        return NextResponse.json({ students });
+        const school = await prisma.school.findUnique({
+            where: { id: user.schoolId! },
+            select: { name: true, address: true, logoUrl: true }
+        });
+        return NextResponse.json({ students, school });
 
     } catch (e) {
         return handleApiError(e);
@@ -37,21 +49,20 @@ export async function GET(request: Request) {
 // POST: Add a new student
 export async function POST(request: Request) {
     try {
-        // [SECURITY] STRICTLY Principals/Admins only. Teachers cannot add students.
         const user = await requireRole(['PRINCIPAL', 'SUPERADMIN']);
 
-        // Ensure Principal is linked to a school (Superadmin might need payload override, handling Principal case first)
         if (!user.schoolId && user.role !== 'SUPERADMIN') {
             return NextResponse.json({ error: "Configuration Error: User not linked to school" }, { status: 403 });
         }
 
-        const targetSchoolId = user.schoolId; // For SuperAdmin we'd need to parse from body, ignoring for now as directed
+        const targetSchoolId = user.schoolId;
+        const body = await request.json();
+        const {
+            firstName, lastName, grade, classId, email,
+            gender, dob, address, guardianName, guardianPhone, secondaryPhone, guardianRelation, grandfatherName, photoUrl
+        } = body;
 
-        const { firstName, lastName, grade, classId, email } = await request.json();
-
-        // Find Grade or FAIL if strict, but adhering to prev logic:
         let gradeRecord: any;
-
         if (grade) {
             gradeRecord = await prisma.grade.findFirst({
                 where: { schoolId: targetSchoolId!, level: parseInt(grade) || 0 }
@@ -73,15 +84,22 @@ export async function POST(request: Request) {
                 firstName,
                 lastName,
                 schoolId: targetSchoolId!,
-                gradeId: gradeRecord?.id, // Should validate
+                gradeId: gradeRecord?.id,
                 classId: classId || null,
                 email: email || null,
-                dob: new Date(),
-                studentCode: `ST-${Math.random().toString(36).substring(2, 10).toUpperCase()}`
+                dob: dob ? new Date(dob) : null,
+                gender: gender || null,
+                address: address || null,
+                guardianName: guardianName || null,
+                guardianPhone: guardianPhone || null,
+                secondaryPhone: secondaryPhone || null,
+                guardianRelation: guardianRelation || null,
+                grandfatherName: grandfatherName || null,
+                photoUrl: photoUrl || null,
+                studentCode: `ST-${Math.random().toString(36).substring(2, 8).toUpperCase()}-${new Date().getFullYear()}`
             }
         });
 
-        // Log Activity
         await logActivity({
             userId: user.id,
             action: 'CREATE_STUDENT',
@@ -90,7 +108,6 @@ export async function POST(request: Request) {
             after: student
         });
 
-        // Create Invite Token and Send Email if email provided
         if (email) {
             const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
             await prisma.inviteToken.create({
@@ -99,7 +116,7 @@ export async function POST(request: Request) {
                     email,
                     role: 'STUDENT',
                     schoolId: targetSchoolId!,
-                    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+                    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
                 }
             });
 
@@ -111,6 +128,82 @@ export async function POST(request: Request) {
         }
 
         return NextResponse.json({ student });
+
+    } catch (e: any) {
+        return handleApiError(e);
+    }
+}
+
+// PUT: Update student details
+export async function PUT(request: Request) {
+    try {
+        const user = await requireRole(['PRINCIPAL', 'SUPERADMIN']);
+        const body = await request.json();
+        const { id, ...data } = body;
+
+        if (!id) return NextResponse.json({ error: "ID required" }, { status: 400 });
+
+        const student = await prisma.student.update({
+            where: { id },
+            data: {
+                firstName: data.firstName,
+                lastName: data.lastName,
+                email: data.email,
+                classId: data.classId,
+                gradeId: data.gradeId, // Assuming passed as ID or handle logic logic if level passed
+                guardianName: data.guardianName,
+                guardianPhone: data.guardianPhone,
+                secondaryPhone: data.secondaryPhone,
+                address: data.address,
+                photoUrl: data.photoUrl,
+                dob: data.dob ? new Date(data.dob) : undefined,
+                gender: data.gender
+            }
+        });
+
+        await logActivity({
+            userId: user.id,
+            action: 'UPDATE_STUDENT',
+            resourceType: 'STUDENT',
+            resourceId: student.id,
+            after: student
+        });
+
+        return NextResponse.json({ student });
+
+    } catch (e: any) {
+        return handleApiError(e);
+    }
+}
+
+// DELETE: Archive/Delete student
+export async function DELETE(request: Request) {
+    try {
+        const user = await requireRole(['PRINCIPAL', 'SUPERADMIN']);
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+
+        if (!id) return NextResponse.json({ error: "ID required" }, { status: 400 });
+
+        // Check if student belongs to school
+        const existing = await prisma.student.findUnique({ where: { id } });
+        if (!existing || existing.schoolId !== user.schoolId) {
+            return NextResponse.json({ error: "Not found or unauthorized" }, { status: 404 });
+        }
+
+        const student = await prisma.student.delete({
+            where: { id }
+        });
+
+        await logActivity({
+            userId: user.id,
+            action: 'DELETE_STUDENT',
+            resourceType: 'STUDENT',
+            resourceId: id,
+            before: student
+        });
+
+        return NextResponse.json({ success: true });
 
     } catch (e: any) {
         return handleApiError(e);

@@ -12,14 +12,21 @@ export async function GET(request: Request) {
         const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
         if (!dbUser?.schoolId) return NextResponse.json({ error: 'No school found' }, { status: 400 });
 
+        // Auto-delete past events (events that have already occurred)
+        const now = new Date();
+        await prisma.event.deleteMany({
+            where: {
+                schoolId: dbUser.schoolId,
+                eventDate: { lt: now }
+            }
+        });
+
+        // Fetch remaining (future) events
         const events = await prisma.event.findMany({
             where: { schoolId: dbUser.schoolId },
             orderBy: { eventDate: 'asc' },
             include: { createdBy: { select: { name: true, role: true } } }
         });
-
-        // Filter for future events only? Or all? Let's return all upcoming + recent past.
-        // For simplicity, returning all sorted by date.
 
         return NextResponse.json({ events });
     } catch (e) {

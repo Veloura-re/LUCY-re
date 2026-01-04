@@ -13,7 +13,8 @@ import {
     LogOut,
     GraduationCap,
     BarChart3,
-    CreditCard
+    CreditCard,
+    Plus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SignOutButton } from "@/components/auth/sign-out-button";
@@ -74,33 +75,42 @@ export default async function DashboardLayout({
             { icon: BookOpen, label: "Classes", href: "/dashboard/classes" },
             { icon: Users, label: "Staffing", href: "/dashboard/staffing" },
             { icon: Users, label: "Parents", href: "/dashboard/parents" },
+            { icon: BarChart3, label: "Marklists Config", href: "/dashboard/director/marklist/create" }, // Added
             { icon: Calendar, label: "Timetable", href: "/dashboard/timetable" },
             { icon: Users, label: "Attendance", href: "/dashboard/attendance/settings" },
             { icon: BarChart3, label: "Reports", href: "/dashboard/reports" },
             { icon: CreditCard, label: "Finance", href: "/dashboard/finance" },
+            { icon: BookOpen, label: "Books", href: "/dashboard/books" },
             { icon: MessageSquare, label: "Messages", href: "/dashboard/messages" },
             { icon: Settings, label: "Settings", href: "/dashboard/settings" },
         ],
         TEACHER: [
             { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
+            { icon: Plus, label: "Add Exam", href: "/dashboard/teacher/exams/create" },
             { icon: Users, label: "Parents", href: "/dashboard/parents" },
             { icon: Calendar, label: "Schedule", href: "/dashboard/teacher/schedule" },
             { icon: Users, label: "Attendance", href: "/dashboard/teacher/attendance" },
             { icon: GraduationCap, label: "Grades", href: "/dashboard/teacher/exams" },
+            { icon: BarChart3, label: "Marklists", href: "/dashboard/marklist" }, // Added
+            { icon: BookOpen, label: "Books", href: "/dashboard/books" },
             { icon: MessageSquare, label: "Messages", href: "/dashboard/messages" },
             { icon: Settings, label: "Settings", href: "/dashboard/settings" },
         ],
         HOMEROOM: [
             { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
+            { icon: Plus, label: "Add Exam", href: "/dashboard/teacher/exams/create" },
             { icon: Users, label: "Parents", href: "/dashboard/parents" },
             { icon: Users, label: "My Homeroom", href: "/dashboard/homeroom" },
             { icon: BookOpen, label: "My Classes", href: "/dashboard/classes" },
+            { icon: BarChart3, label: "Marklists", href: "/dashboard/marklist" }, // Added
+            { icon: BookOpen, label: "Books", href: "/dashboard/books" },
             { icon: MessageSquare, label: "Messages", href: "/dashboard/messages" },
             { icon: Settings, label: "Settings", href: "/dashboard/settings" },
         ],
         PARENT: [
             { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
             { icon: CreditCard, label: "Billing", href: "/dashboard/finance" },
+            { icon: BookOpen, label: "Books", href: "/dashboard/books" },
             { icon: MessageSquare, label: "Messages", href: "/dashboard/messages" },
             { icon: Settings, label: "Settings", href: "/dashboard/settings" },
         ],
@@ -109,6 +119,9 @@ export default async function DashboardLayout({
             { icon: Calendar, label: "Timetable", href: "/dashboard/student/timetable" },
             { icon: BookOpen, label: "Exams", href: "/dashboard/student/exams" },
             { icon: BarChart3, label: "Grades", href: "/dashboard/student/grades" },
+            // Students can't edit marklists, maybe view? Existing "Grades" might use the new marklist backend later?
+            // User didn't request Student access yet, just "Teachers can only... Director can...".
+            { icon: BookOpen, label: "Books", href: "/dashboard/books" },
             { icon: MessageSquare, label: "Messages", href: "/dashboard/messages" },
             { icon: Settings, label: "Settings", href: "/dashboard/settings" },
         ],

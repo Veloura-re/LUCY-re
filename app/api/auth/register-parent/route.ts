@@ -32,6 +32,48 @@ export async function POST(request: Request) {
                             pairingMethod: 'CODE'
                         }
                     });
+
+                    // ---------------------------------------------------------
+                    // ADD TO WHOLE SCHOOL CHAT
+                    // ---------------------------------------------------------
+                    // 1. Find or Create "Whole School" Chat Room
+                    let wholeSchoolChat = await tx.chatRoom.findFirst({
+                        where: {
+                            schoolId: student.schoolId,
+                            name: "Whole School",
+                            type: "GROUP"
+                        }
+                    });
+
+                    if (!wholeSchoolChat) {
+                        wholeSchoolChat = await tx.chatRoom.create({
+                            data: {
+                                schoolId: student.schoolId,
+                                name: "Whole School",
+                                type: "GROUP",
+                            }
+                        });
+                    }
+
+                    // 2. Add User to Chat Room
+                    // Check if already member (unlikely for new user but good practice)
+                    const existingMember = await tx.chatRoomMember.findUnique({
+                        where: {
+                            chatRoomId_userId: {
+                                chatRoomId: wholeSchoolChat.id,
+                                userId: user.id
+                            }
+                        }
+                    });
+
+                    if (!existingMember) {
+                        await tx.chatRoomMember.create({
+                            data: {
+                                chatRoomId: wholeSchoolChat.id,
+                                userId: user.id
+                            }
+                        });
+                    }
                 }
             }
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { BookOpen, Users, GraduationCap, ArrowRight, Sparkles, Plus, Calendar, Loader2 } from "lucide-react";
+import { BookOpen, Users, GraduationCap, ArrowRight, Sparkles, Plus, Calendar, Loader2, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -91,6 +91,39 @@ export function TeacherView({ user }: { user: any }) {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                 <div className="lg:col-span-8 space-y-10">
+                    {/* Maker Hub - New Section */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                        <Link href="/dashboard/teacher/exams/create" className="group">
+                            <Card className="bg-eduGreen-600 border-eduGreen-500 rounded-[2rem] overflow-hidden shadow-2xl transition-all hover:scale-[1.02] active:scale-95 group-hover:shadow-eduGreen-900/40 relative">
+                                <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-100 transition-opacity">
+                                    <Plus className="w-8 h-8 text-white" />
+                                </div>
+                                <CardContent className="p-8">
+                                    <p className="text-white/60 text-[10px] font-black uppercase tracking-widest mb-1">Formal Registry</p>
+                                    <h3 className="text-2xl font-black text-white italic">ADD EXAM</h3>
+                                    <p className="text-white/80 text-[10px] font-bold mt-2 uppercase tracking-widest flex items-center gap-2">
+                                        Initialize Schema <ArrowRight className="w-3 h-3" />
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        </Link>
+
+                        <Link href="/dashboard/teacher/exams/create?mode=ai" className="group">
+                            <Card className="bg-zinc-900 border-zinc-800 rounded-[2rem] overflow-hidden shadow-2xl transition-all hover:scale-[1.02] active:scale-95 group-hover:border-purple-500/50 relative">
+                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-100 transition-opacity">
+                                    <Sparkles className="w-8 h-8 text-purple-500" />
+                                </div>
+                                <CardContent className="p-8">
+                                    <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-1">Semantic Drafting</p>
+                                    <h3 className="text-2xl font-black text-white italic uppercase">START WRITING</h3>
+                                    <p className="text-purple-400 text-[10px] font-bold mt-2 uppercase tracking-widest flex items-center gap-2">
+                                        Neural Synthesis <ArrowRight className="w-3 h-3" />
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        </Link>
+                    </div>
+
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center py-32 rounded-[3rem] bg-zinc-950/30 border border-zinc-900 border-dashed">
                             <Loader2 className="w-10 h-10 animate-spin text-eduGreen-600 mb-6" />
@@ -227,15 +260,29 @@ export function TeacherView({ user }: { user: any }) {
                         </CardHeader>
                         <CardContent className="p-6 space-y-4">
                             {exams.length > 0 ? exams.map((exam) => (
-                                <Link key={exam.id} href={`/dashboard/teacher/gradebook/${exam.id}`}>
-                                    <div className="p-4 bg-zinc-900/30 rounded-2xl border border-zinc-900 hover:border-eduGreen-900/30 transition-all mb-3 group">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <span className="text-[9px] font-black text-eduGreen-700 uppercase tracking-widest">{exam.subject?.name}</span>
-                                            <span className="text-[8px] font-bold text-zinc-700">{exam.dueDate ? new Date(exam.dueDate).toLocaleDateString() : 'N/A'}</span>
+                                <div key={exam.id} className="p-4 bg-zinc-900/30 rounded-2xl border border-zinc-900 hover:border-eduGreen-900/30 transition-all mb-3 group">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-[9px] font-black text-eduGreen-700 uppercase tracking-widest">{exam.subject?.name}</span>
+                                        <div className="flex items-center gap-2">
+                                            <Link href={`/dashboard/teacher/exams/${exam.id}/editor`}>
+                                                <Button size="icon" variant="ghost" className="h-6 w-6 text-zinc-600 hover:text-purple-500">
+                                                    <Sparkles className="w-3.5 h-3.5" />
+                                                </Button>
+                                            </Link>
+                                            <Link href={`/dashboard/teacher/gradebook/${exam.id}`}>
+                                                <Button size="icon" variant="ghost" className="h-6 w-6 text-zinc-600 hover:text-eduGreen-500">
+                                                    <Brain className="w-3.5 h-3.5" />
+                                                </Button>
+                                            </Link>
                                         </div>
-                                        <div className="font-black text-sm text-white group-hover:text-eduGreen-500 transition-colors">{exam.title}</div>
                                     </div>
-                                </Link>
+                                    <div className="font-black text-sm text-white group-hover:text-eduGreen-500 transition-colors flex items-center justify-between">
+                                        {exam.title}
+                                        <Link href={`/dashboard/teacher/gradebook/${exam.id}`}>
+                                            <ArrowRight className="w-3 h-3 text-zinc-800 group-hover:text-eduGreen-500 transition-all" />
+                                        </Link>
+                                    </div>
+                                </div>
                             )) : (
                                 <div className="text-center py-6">
                                     <p className="text-[10px] font-black text-zinc-800 uppercase tracking-widest">No recent assessments</p>

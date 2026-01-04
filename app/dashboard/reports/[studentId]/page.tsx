@@ -33,6 +33,13 @@ export default function StudentReportCardPage() {
 
     const { student, grades, attendance, remarks } = data;
 
+    const getPerformanceColor = (pct: number) => {
+        if (pct >= 80) return { text: "text-emerald-500", border: "border-emerald-900/30", bg: "bg-emerald-900/10" };
+        if (pct >= 60) return { text: "text-blue-500", border: "border-blue-900/30", bg: "bg-blue-900/10" };
+        if (pct >= 40) return { text: "text-amber-500", border: "border-amber-900/30", bg: "bg-amber-900/10" };
+        return { text: "text-rose-500", border: "border-rose-900/30", bg: "bg-rose-900/10" };
+    };
+
     const printReport = () => {
         window.print();
     };
@@ -104,12 +111,20 @@ export default function StudentReportCardPage() {
                                         </div>
                                     </div>
                                     <div className="flex gap-8 items-center">
-                                        <div className="text-right">
+                                        <div className={cn(
+                                            "text-right",
+                                            getPerformanceColor(g.score).text
+                                        )}>
                                             <p className="text-[8px] font-black text-zinc-700 uppercase tracking-widest">Raw Score</p>
-                                            <p className="text-xl font-black text-white print:text-black">{g.score}%</p>
+                                            <p className="text-xl font-black">{g.score}%</p>
                                         </div>
-                                        <div className="w-12 h-12 bg-eduGreen-950/20 border border-eduGreen-900/30 rounded-xl flex items-center justify-center font-black text-eduGreen-500 print:border-zinc-300">
-                                            {g.score >= 90 ? 'A' : g.score >= 80 ? 'B' : g.score >= 70 ? 'C' : 'D'}
+                                        <div className={cn(
+                                            "w-12 h-12 border rounded-xl flex items-center justify-center font-black print:border-zinc-300",
+                                            getPerformanceColor(g.score).bg,
+                                            getPerformanceColor(g.score).text,
+                                            getPerformanceColor(g.score).border
+                                        )}>
+                                            {g.score >= 90 ? 'A+' : g.score >= 80 ? 'A' : g.score >= 70 ? 'B' : g.score >= 60 ? 'C' : g.score >= 50 ? 'D' : 'F'}
                                         </div>
                                     </div>
                                 </div>

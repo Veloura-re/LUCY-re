@@ -3,110 +3,82 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Loader2, Timer, AlertTriangle, ShieldAlert, CheckCircle2, ChevronRight, ChevronLeft } from "lucide-react";
+import { Loader2 as Loader2Icon, Timer, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-
-// Mock Exam Data
-const EXAM_DATA = {
-    id: "exam-456",
-    title: "Quantum Mechanics Unit Test",
-    duration: 120, // minutes
-    questions: [
-        {
-            id: 1,
-            text: "Which of the following describes the behavior of a particle in a box?",
-            options: [
-                "The particle can be found anywhere with equal probability.",
-                "The energy levels are continuous.",
-                "The energy levels are quantized.",
-                "The particle is at rest."
-            ]
-        },
-        {
-            id: 2,
-            text: "What is the physical interpretation of the square of the wave function |ψ(x)|²?",
-            options: [
-                "Momentum density",
-                "Probability density",
-                "Energy density",
-                "Charge density"
-            ]
-        },
-        {
-            id: 3,
-            text: "Heisenberg's Uncertainty Principle states that:",
-            options: [
-                "Energy and time cannot be measured simultaneously with arbitrary precision.",
-                "Position and momentum cannot be measured simultaneously with arbitrary precision.",
-                "Both A and B.",
-                "None of the above."
-            ]
-        }
-    ]
-};
 
 export default function ExamRoomPage({ params }: { params: { id: string } }) {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
-    const [timeLeft, setTimeLeft] = useState(EXAM_DATA.duration * 60);
-    const [answers, setAnswers] = useState<Record<number, string>>({});
-    const [currentQuestion, setCurrentQuestion] = useState(0);
-    const [warnings, setWarnings] = useState(0);
+    const [examData, setExamData] = useState<any>(null);
+    const [timeLeft, setTimeLeft] = useState(0);
+    const [answers, setAnswers] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Initial Load
     useEffect(() => {
-        setTimeout(() => setLoading(false), 1500);
-    }, []);
+        const fetchExam = async () => {
+            try {
+                const res = await fetch(`/api/student/exams/${params.id}`);
+                const data = await res.json();
+                if (data.error) {
+                    toast.error(data.error);
+                    router.push("/dashboard/student/exams");
+                    return;
+                }
+                setExamData(data.exam);
+                setTimeLeft((data.exam.duration || 60) * 60);
+            } catch (e) {
+                toast.error("Failed to initialize assessment uplink.");
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchExam();
+    }, [params.id, router]);
 
     // Timer
     useEffect(() => {
-        if (loading) return;
+        if (loading || !examData) return;
         const timer = setInterval(() => {
             setTimeLeft((prev) => {
                 if (prev <= 1) {
                     clearInterval(timer);
-                    handleSubmit(); // Auto-submit
+                    handleSubmit();
                     return 0;
                 }
                 return prev - 1;
             });
         }, 1000);
         return () => clearInterval(timer);
-    }, [loading]);
-
-    // Anti-Cheat: Visibility Change
-    useEffect(() => {
-        const handleVisibilityChange = () => {
-            if (document.hidden) {
-                setWarnings((prev) => prev + 1);
-                toast.error("Warning: Implementation of Focus Loss Detected.", {
-                    description: "This incident has been logged. Continued deviation will result in protocol termination.",
-                    icon: <ShieldAlert className="w-5 h-5 text-red-500" />,
-                    duration: 5000,
-                });
-            }
-        };
-
-        document.addEventListener("visibilitychange", handleVisibilityChange);
-        return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-    }, []);
-
-    const handleAnswer = (val: string) => {
-        setAnswers({ ...answers, [EXAM_DATA.questions[currentQuestion].id]: val });
-    };
+    }, [loading, examData]);
 
     const handleSubmit = async () => {
+        if (isSubmitting) return;
         setIsSubmitting(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        router.push("/dashboard/student/exams?status=completed");
-        toast.success("Assessment Protocol Concluded. Data Uplink Secure.");
+        try {
+            const res = await fetch(`/api/student/exams/${params.id}/submit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ answers })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                toast.success(`Assessment Concluded. Score: ${data.score.toFixed(1)}%`);
+                router.push("/dashboard/student/exams?status=completed");
+            } else {
+                toast.error(data.error || "Submission failed.");
+            }
+        } catch (e) {
+            toast.error("Critical Uplink Failure during submission.");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const formatTime = (seconds: number) => {
@@ -116,137 +88,157 @@ export default function ExamRoomPage({ params }: { params: { id: string } }) {
         return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     };
 
-    if (loading) {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center space-y-4">
-                <Spinner className="w-12 h-12 text-eduGreen-500" />
-                <p className="text-zinc-500 font-black uppercase tracking-widest text-xs animate-pulse">Establishing Secure Uplink...</p>
-            </div>
-        );
-    }
+    if (loading) return (
+        <div className="min-h-screen flex flex-col items-center justify-center space-y-4 bg-zinc-950">
+            <Loader2Icon className="w-12 h-12 text-eduGreen-500 animate-spin" />
+            <p className="text-zinc-500 font-black uppercase tracking-[0.4em] text-xs">Establishing Protocol Uplink...</p>
+        </div>
+    );
+
+    if (!examData) return null;
 
     return (
-        <div className="flex flex-col h-screen overflow-hidden">
-            {/* Top Bar */}
-            <header className="h-20 bg-zinc-950 border-b border-zinc-900 flex items-center justify-between px-8 z-50">
+        <div className="min-h-screen bg-zinc-950 flex flex-col">
+            <header className="sticky top-0 z-[60] h-20 bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-900 flex items-center justify-between px-8">
                 <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-eduGreen-900/20 rounded-xl flex items-center justify-center border border-eduGreen-500/20">
-                        <ShieldAlert className="w-5 h-5 text-eduGreen-500" />
-                    </div>
+                    <ShieldAlert className="w-5 h-5 text-eduGreen-500" />
                     <div>
-                        <h1 className="text-lg font-black text-white tracking-tight">{EXAM_DATA.title}</h1>
-                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Secure Environment Active</p>
+                        <h1 className="text-lg font-black text-white tracking-tight uppercase italic">{examData.title}</h1>
+                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Assessment Matrix</p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-8">
-                    {warnings > 0 && (
-                        <div className="flex items-center gap-2 text-red-500 animate-pulse">
-                            <AlertTriangle className="w-4 h-4" />
-                            <span className="text-xs font-black uppercase tracking-widest">{warnings} Flag(s) Detected</span>
-                        </div>
-                    )}
-
-                    <div className="px-6 py-2 bg-zinc-900 rounded-xl border border-zinc-800 flex items-center gap-3">
+                <div className="flex items-center gap-4 md:gap-8">
+                    <div className="px-4 py-2 bg-zinc-900 rounded-xl border border-zinc-800 flex items-center gap-3">
                         <Timer className={cn("w-4 h-4", timeLeft < 300 ? "text-red-500 animate-pulse" : "text-zinc-400")} />
-                        <span className={cn("font-mono font-bold text-xl", timeLeft < 300 ? "text-red-500" : "text-white")}>
+                        <span className={cn("font-mono font-black text-lg", timeLeft < 300 ? "text-red-500" : "text-white")}>
                             {formatTime(timeLeft)}
                         </span>
                     </div>
-
-                    <Button
-                        onClick={handleSubmit}
-                        disabled={isSubmitting}
-                        className="bg-eduGreen-600 hover:bg-eduGreen-500 text-white font-black uppercase tracking-widest px-8 rounded-xl"
-                    >
-                        {isSubmitting ? <Spinner className="w-4 h-4" /> : "Submit Assessment"}
+                    <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-eduGreen-600 hover:bg-eduGreen-500 text-white font-black uppercase tracking-widest px-8 rounded-xl h-11">
+                        {isSubmitting ? <Loader2Icon className="w-4 h-4 animate-spin" /> : "Transmit"}
                     </Button>
                 </div>
             </header>
 
-            {/* Main Content */}
-            <main className="flex-1 overflow-hidden relative flex">
-                {/* Question Navigation */}
-                <aside className="w-20 md:w-24 bg-zinc-950/50 border-r border-zinc-900 flex flex-col items-center py-8 gap-4 overflow-y-auto">
-                    {EXAM_DATA.questions.map((q, idx) => (
-                        <button
-                            key={q.id}
-                            onClick={() => setCurrentQuestion(idx)}
-                            className={cn(
-                                "w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm transition-all relative",
-                                currentQuestion === idx
-                                    ? "bg-eduGreen-500 text-black shadow-[0_0_15px_rgba(20,184,115,0.4)] scale-110"
-                                    : answers[q.id]
-                                        ? "bg-zinc-800 text-eduGreen-500 border border-eduGreen-900/50"
-                                        : "bg-zinc-900 text-zinc-600 hover:bg-zinc-800"
-                            )}
-                        >
-                            {idx + 1}
-                            {answers[q.id] && <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-eduGreen-500 rounded-full border-2 border-zinc-950" />}
-                        </button>
-                    ))}
-                </aside>
-
-                {/* Question Area */}
-                <div className="flex-1 flex flex-col items-center justify-center p-8 md:p-20 relative">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(20,184,115,0.03),transparent_70%)] pointer-events-none" />
-
-                    <div className="w-full max-w-3xl space-y-12 relative z-10">
-                        <div className="space-y-4">
-                            <span className="text-zinc-500 font-black uppercase tracking-[0.2em] text-xs">
-                                Question {currentQuestion + 1} of {EXAM_DATA.questions.length}
-                            </span>
-                            <h2 className="text-3xl md:text-4xl font-bold text-white leading-tight">
-                                {EXAM_DATA.questions[currentQuestion].text}
-                            </h2>
-                        </div>
-
-                        <RadioGroup
-                            value={answers[EXAM_DATA.questions[currentQuestion].id] || ""}
-                            onValueChange={handleAnswer}
-                            className="space-y-4"
-                        >
-                            {EXAM_DATA.questions[currentQuestion].options.map((option, idx) => (
-                                <div key={idx} className="relative">
-                                    <RadioGroupItem value={option} id={`opt-${idx}`} className="peer sr-only" />
-                                    <Label
-                                        htmlFor={`opt-${idx}`}
-                                        className="flex items-center p-6 bg-zinc-900/40 border border-zinc-800 rounded-2xl cursor-pointer hover:bg-zinc-900/60 hover:border-zinc-700 peer-checked:bg-eduGreen-950/20 peer-checked:border-eduGreen-500 peer-checked:text-white text-zinc-400 font-medium transition-all group"
-                                    >
-                                        <div className="w-6 h-6 rounded-full border border-zinc-700 mr-4 flex items-center justify-center peer-checked:border-eduGreen-500 peer-checked:bg-eduGreen-500 group-peer-checked:scale-110 transition-all">
-                                            <div className="w-2 h-2 bg-black rounded-full opacity-0 peer-checked:opacity-100" />
-                                        </div>
-                                        <span className="text-lg">{option}</span>
-                                    </Label>
-                                </div>
-                            ))}
-                        </RadioGroup>
-
-                        <div className="flex items-center justify-between pt-10 border-t border-zinc-900/50">
-                            <Button
-                                variant="ghost"
-                                onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 1))}
-                                disabled={currentQuestion === 0}
-                                className="text-zinc-500 hover:text-white font-black uppercase tracking-widest"
-                            >
-                                <ChevronLeft className="w-4 h-4 mr-2" /> Previous
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                onClick={() => setCurrentQuestion(Math.min(EXAM_DATA.questions.length - 1, currentQuestion + 1))}
-                                disabled={currentQuestion === EXAM_DATA.questions.length - 1}
-                                className="text-zinc-500 hover:text-white font-black uppercase tracking-widest"
-                            >
-                                Next <ChevronRight className="w-4 h-4 ml-2" />
-                            </Button>
+            <main className="flex-1 max-w-4xl mx-auto w-full py-10 px-4 space-y-12 pb-40">
+                {/* Intro Card */}
+                <div className="bg-zinc-900/40 border border-zinc-900 rounded-[3rem] p-10 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-eduGreen-600" />
+                    <div className="space-y-4">
+                        <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic">{examData.title}</h2>
+                        <div className="flex flex-wrap gap-4 pt-2">
+                            <Badge variant="outline" className="border-zinc-800 text-zinc-500 py-1.5 px-4 font-black uppercase tracking-widest text-[9px]">
+                                {examData.subject?.name}
+                            </Badge>
+                            <Badge variant="outline" className="border-zinc-800 text-eduGreen-500 py-1.5 px-4 font-black uppercase tracking-widest text-[9px]">
+                                {examData.questions.length} Nodes
+                            </Badge>
                         </div>
                     </div>
+                </div>
+
+                {/* Adaptive Question Rendering */}
+                <div className="space-y-10">
+                    {examData.questions.map((q: any, i: number) => (
+                        <div key={q.id} className={cn(
+                            "group bg-zinc-900/20 border border-zinc-900 rounded-[2.5rem] p-10 transition-all border-l-4",
+                            answers[q.id] ? "border-l-eduGreen-500 bg-eduGreen-900/5" : "border-l-zinc-800 hover:bg-zinc-900/30"
+                        )}>
+                            <div className="space-y-8">
+                                <div className="flex items-start gap-6">
+                                    <div className={cn(
+                                        "w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg border transition-all flex-shrink-0",
+                                        answers[q.id] ? "bg-eduGreen-500 text-black border-eduGreen-400" : "bg-zinc-950 text-zinc-600 border-zinc-800"
+                                    )}>
+                                        {i + 1}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <h3 className="text-2xl font-bold text-white leading-tight">{q.text}</h3>
+                                        <Badge variant="outline" className="border-zinc-800 text-[8px] uppercase tracking-widest font-black text-zinc-600">
+                                            {q.type} • {q.points} Pts
+                                        </Badge>
+                                    </div>
+                                </div>
+
+                                {/* MCQ Renderer */}
+                                {q.type === "MCQ" && (
+                                    <RadioGroup value={answers[q.id] || ""} onValueChange={(val) => setAnswers({ ...answers, [q.id]: val })} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {q.options?.map((option: string, idx: number) => (
+                                            <Label key={idx} className={cn(
+                                                "flex items-center p-6 bg-zinc-950 border border-zinc-900 rounded-3xl cursor-pointer transition-all",
+                                                "hover:bg-zinc-900 hover:border-zinc-700",
+                                                answers[q.id] === option && "bg-eduGreen-950/20 border-eduGreen-500 text-white"
+                                            )}>
+                                                <RadioGroupItem value={option} className="sr-only" />
+                                                <div className={cn("w-5 h-5 rounded-full border-2 mr-4 flex items-center justify-center transition-all", answers[q.id] === option ? "bg-eduGreen-500 border-eduGreen-500" : "border-zinc-800")}>
+                                                    <div className="w-1.5 h-1.5 bg-black rounded-full" />
+                                                </div>
+                                                <span className="text-base font-medium">{option}</span>
+                                            </Label>
+                                        ))}
+                                    </RadioGroup>
+                                )}
+
+                                {/* SHORT Renderer */}
+                                {q.type === "SHORT" && (
+                                    <Input
+                                        value={answers[q.id] || ""}
+                                        onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })}
+                                        placeholder="Type your concise response..."
+                                        className="bg-zinc-950 border-zinc-800 h-16 rounded-3xl px-8 text-lg font-medium text-white focus:border-eduGreen-500 transition-all"
+                                    />
+                                )}
+
+                                {/* LONG Renderer */}
+                                {q.type === "LONG" && (
+                                    <div className="space-y-2">
+                                        <Textarea
+                                            value={answers[q.id] || ""}
+                                            onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })}
+                                            placeholder="Normal writing mode active. Type your detailed response..."
+                                            className="bg-zinc-950 border-zinc-800 rounded-[2rem] p-8 text-lg font-medium text-white focus:border-eduGreen-500 transition-all min-h-[300px] leading-relaxed"
+                                        />
+                                        <div className="flex justify-end pr-4 text-[10px] font-black text-zinc-700 uppercase tracking-widest">
+                                            {answers[q.id]?.split(/\s+/).filter(Boolean).length || 0} / {q.minWords || 0} Recommended Words
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* TF Renderer */}
+                                {q.type === "TF" && (
+                                    <div className="flex gap-4">
+                                        {["True", "False"].map((val) => (
+                                            <Button
+                                                key={val}
+                                                variant="outline"
+                                                onClick={() => setAnswers({ ...answers, [q.id]: val })}
+                                                className={cn(
+                                                    "flex-1 h-16 rounded-3xl font-black uppercase tracking-widest transition-all",
+                                                    answers[q.id] === val ? "bg-orange-500/20 border-orange-500 text-orange-500" : "bg-zinc-950 border-zinc-900 text-zinc-600 hover:text-white"
+                                                )}
+                                            >
+                                                {val}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="pt-10 flex flex-col items-center gap-6">
+                    <div className="w-20 h-1 bg-zinc-900 rounded-full" />
+                    <Button onClick={handleSubmit} disabled={isSubmitting} className="h-20 w-full rounded-[2.5rem] bg-white text-black hover:bg-zinc-200 font-black uppercase tracking-[0.3em] text-xs transition-all shadow-2xl active:scale-95">
+                        {isSubmitting ? <Loader2Icon className="w-6 h-6 animate-spin" /> : "Finalize & Transmit Protocol"}
+                    </Button>
                 </div>
             </main>
         </div>
     );
 }
 
-function Spinner({ className }: { className?: string }) {
-    return <Loader2 className={cn("animate-spin", className)} />;
+function Loader2({ className }: { className?: string }) {
+    return <Loader2Icon className={cn("animate-spin", className)} />;
 }

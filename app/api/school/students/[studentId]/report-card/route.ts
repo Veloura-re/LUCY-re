@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { handleApiError, requireRole } from '@/lib/security';
 
-export async function GET(request: Request, { params }: { params: { studentId: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ studentId: string }> }) {
     try {
         const user = await requireRole(['SUPERADMIN', 'PRINCIPAL', 'TEACHER', 'PARENT']);
-        const { studentId } = params;
+        const { studentId } = await params;
 
         const student = await prisma.student.findUnique({
             where: { id: studentId },

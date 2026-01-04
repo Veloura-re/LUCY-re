@@ -6,52 +6,28 @@ import { format, differenceInMinutes, isPast, isFuture } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Timer, FileText, CheckCircle2, AlertCircle, ArrowRight, Lock } from "lucide-react";
+import { Timer, FileText, CheckCircle2, AlertCircle, ArrowRight, Lock, Brain } from "lucide-react";
 import { motion } from "framer-motion";
 import { SpringingLoader } from "@/components/dashboard/springing-loader";
 import { cn } from "@/lib/utils";
-
-// Mock Data - To be replaced with API
-const MOCK_EXAMS = [
-    {
-        id: "exam-123",
-        subject: "Mathematics",
-        title: "Calculus Mid-Term",
-        date: new Date(new Date().setHours(new Date().getHours() + 2)), // 2 hours from now
-        duration: 90,
-        status: "UPCOMING", // UPCOMING, ACTIVE, COMPLETED, MISSED
-        locked: true
-    },
-    {
-        id: "exam-456",
-        subject: "Physics",
-        title: "Quantum Mechanics Unit Test",
-        date: new Date(new Date().setHours(new Date().getHours() - 1)), // Started 1 hour ago
-        duration: 120,
-        status: "ACTIVE",
-        locked: false
-    },
-    {
-        id: "exam-789",
-        subject: "History",
-        title: "World War II Analysis",
-        date: new Date(new Date().setDate(new Date().getDate() - 2)), // 2 days ago
-        duration: 60,
-        status: "COMPLETED",
-        score: 92,
-        locked: true
-    }
-];
 
 export default function StudentExamsPage() {
     const [loading, setLoading] = useState(true);
     const [exams, setExams] = useState<any[]>([]);
 
     useEffect(() => {
-        setTimeout(() => {
-            setExams(MOCK_EXAMS);
-            setLoading(false);
-        }, 1000);
+        const fetchExams = async () => {
+            try {
+                const res = await fetch('/api/student/exams');
+                const data = await res.json();
+                if (data.exams) setExams(data.exams);
+            } catch (e) {
+                console.error("Failed to fetch exams:", e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchExams();
     }, []);
 
     if (loading) return <SpringingLoader message="Retrieving Assessment Protocols" />;
@@ -128,9 +104,18 @@ export default function StudentExamsPage() {
                                             <Lock className="w-4 h-4 mr-2" /> Locked
                                         </Button>
                                     ) : (
-                                        <Button variant="outline" className="h-14 border-zinc-800 text-zinc-500 hover:text-white hover:bg-zinc-900 font-black uppercase tracking-widest px-8 rounded-xl">
-                                            View Results
-                                        </Button>
+                                        <div className="flex items-center gap-3">
+                                            <Link href="/dashboard/student/grades">
+                                                <Button variant="outline" className="h-14 border-zinc-800 text-zinc-500 hover:text-white hover:bg-zinc-900 font-black uppercase tracking-widest px-8 rounded-xl">
+                                                    View Table
+                                                </Button>
+                                            </Link>
+                                            <Link href="/dashboard/student/grades">
+                                                <Button size="icon" className="h-14 w-14 bg-eduGreen-900/20 border border-eduGreen-500/30 text-eduGreen-500 rounded-xl hover:bg-eduGreen-500 hover:text-black transition-all">
+                                                    <Brain className="w-6 h-6" />
+                                                </Button>
+                                            </Link>
+                                        </div>
                                     )}
                                 </div>
                             </CardContent>
