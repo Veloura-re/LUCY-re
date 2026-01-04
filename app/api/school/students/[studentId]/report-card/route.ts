@@ -37,7 +37,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ stud
         });
 
         // Fetch attendance
-        const attendance = await prisma.attendanceRecord.findMany({
+        const attendanceRecords = await prisma.attendanceRecord.findMany({
+            where: { studentId },
+            orderBy: { date: 'desc' },
+            take: 30
+        });
+
+        // For counts, we need the full list (or use prisma.count but this is simpler for now given existing logic)
+        const allAttendance = await prisma.attendanceRecord.findMany({
             where: { studentId }
         });
 
@@ -62,10 +69,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ stud
             student,
             grades,
             attendance: {
-                total: attendance.length,
-                present: attendance.filter(a => a.status === 'PRESENT').length,
-                late: attendance.filter(a => a.status === 'LATE').length,
-                absent: attendance.filter(a => a.status === 'ABSENT').length
+                total: allAttendance.length,
+                present: allAttendance.filter(a => a.status === 'PRESENT').length,
+                late: allAttendance.filter(a => a.status === 'LATE').length,
+                absent: allAttendance.filter(a => a.status === 'ABSENT').length,
+                history: attendanceRecords
             },
             remarks,
             internalNotes

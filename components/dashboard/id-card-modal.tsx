@@ -131,35 +131,47 @@ export function IDCardModal({ isOpen, onClose, user, type, schoolName = "LUCY AC
                                 <div className="relative z-10 flex-1 space-y-6">
                                     <div className="flex items-center gap-2 border-b border-zinc-900 pb-3">
                                         <User className="w-4 h-4 text-eduGreen-600" />
-                                        <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Guardian Registry</h3>
+                                        <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Contact & Lifecycle</h3>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <p className="text-[7px] font-black text-zinc-600 uppercase tracking-widest">Guardian Registry</p>
+                                        <p className="text-xs font-bold text-white uppercase truncate">{user.guardianName || "N/A"} • <span className="text-eduGreen-500 uppercase">{user.guardianRelation || "Guardian"}</span></p>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1">
-                                            <p className="text-[7px] font-black text-zinc-600 uppercase tracking-widest">Primary Contact</p>
-                                            <p className="text-xs font-bold text-white uppercase truncate">{user.guardianName || "N/A"}</p>
+                                            <p className="text-[7px] font-black text-zinc-600 uppercase tracking-widest">Enrolled</p>
+                                            <p className="text-[10px] font-bold text-white uppercase">{user.createdAt ? new Date(user.createdAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : "---"}</p>
                                         </div>
                                         <div className="space-y-1">
-                                            <p className="text-[7px] font-black text-zinc-600 uppercase tracking-widest">Relation</p>
-                                            <p className="text-[9px] font-bold text-eduGreen-500 uppercase">{user.guardianRelation || "Guardian"}</p>
+                                            <p className="text-[7px] font-black text-zinc-600 uppercase tracking-widest">Expires</p>
+                                            <p className="text-[10px] font-bold text-eduGreen-500 uppercase">{user.createdAt ? new Date(new Date(user.createdAt).setFullYear(new Date(user.createdAt).getFullYear() + 1)).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : "---"}</p>
                                         </div>
                                     </div>
 
-                                    <div className="space-y-1 bg-zinc-900/40 p-3 rounded-xl border border-zinc-900/50">
-                                        <p className="text-[7px] font-black text-zinc-600 uppercase tracking-widest mb-1">Emergency Frequency</p>
-                                        <div className="flex items-center gap-2 text-white font-bold text-xs">
-                                            <Phone className="w-3 h-3 text-eduGreen-600" />
-                                            {user.guardianPhone || "N/A"}
+                                    <div className="space-y-2 bg-zinc-900/40 p-3 rounded-xl border border-zinc-900/50">
+                                        <p className="text-[7px] font-black text-zinc-600 uppercase tracking-widest mb-1">Emergency Uplinks</p>
+                                        <div className="flex flex-col gap-1">
+                                            <div className="flex items-center gap-2 text-white font-bold text-xs">
+                                                <Phone className="w-3 h-3 text-eduGreen-600" />
+                                                {user.guardianPhone || "N/A"}
+                                            </div>
+                                            {user.secondaryPhone && (
+                                                <div className="flex items-center gap-2 text-white/60 font-medium text-[10px] pl-5 border-l border-zinc-800">
+                                                    {user.secondaryPhone}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* QR Section Area */}
-                                <div className="relative z-10 w-40 flex flex-col items-center gap-4 shrink-0 border-l border-zinc-900/50 pl-8">
-                                    <div className="relative p-3 bg-white rounded-[15px] shadow-[0_0_40px_rgba(255,255,255,0.05)] group/qr hover:scale-105 transition-transform duration-500">
+                                <div className="relative z-10 w-48 flex flex-col items-center gap-4 shrink-0 border-l border-zinc-900/50 pl-8">
+                                    <div className="relative p-3 bg-white rounded-[15px] shadow-[0_0_40px_rgba(255,255,255,0.05)] group/qr hover:scale-110 transition-transform duration-500">
                                         <QRCode
                                             value={qrValue}
-                                            size={100}
+                                            size={140}
                                             level="H"
                                             className="rounded-lg"
                                         />
@@ -181,61 +193,103 @@ export function IDCardModal({ isOpen, onClose, user, type, schoolName = "LUCY AC
                     </div>
                 </div>
 
-                {/* PRINT VERSION (Standard ID-1 Landscape: 85.60mm x 53.98mm) */}
                 <div className="hidden">
-                    <div ref={componentRef} className="print:block bg-white text-black p-0 m-0 overflow-hidden">
-                        <div className="flex flex-col gap-[2mm] p-[5mm]">
+                    <div ref={componentRef} className="print:block bg-white text-black p-[10mm] m-0 overflow-hidden">
+                        <div className="flex flex-col gap-[10mm]">
                             {/* Front Side Print Landscape */}
-                            <div className="relative w-[85.60mm] h-[53.98mm] border-[0.5pt] border-zinc-200 rounded-[3.18mm] overflow-hidden flex flex-col bg-white">
-                                <div className="h-[8mm] bg-zinc-50 flex items-center justify-between px-[4mm] border-b-[0.5pt]">
-                                    <span className="text-[6pt] font-black uppercase tracking-[0.2em]">{schoolName}</span>
-                                    <span className="text-[5pt] font-black uppercase text-zinc-400">{roleTitle}</span>
-                                </div>
-                                <div className="flex-1 flex flex-row items-center p-[4mm] gap-[5mm]">
-                                    <div className="w-[20mm] h-[20mm] rounded-[3mm] overflow-hidden bg-zinc-100 border-[0.5pt] shrink-0">
-                                        {user.photoUrl ? (
-                                            <img src={user.photoUrl} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-[18pt] font-black text-zinc-200">{initial}</div>
-                                        )}
+                            <div className="relative w-[323.5px] h-[204px] rounded-[12px] overflow-hidden flex flex-col bg-zinc-950 text-white border border-zinc-900" style={{ width: '85.60mm', height: '53.98mm' }}>
+                                {/* Pattern Overlay */}
+                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-eduGreen-900/40 via-transparent to-transparent opacity-60" />
+                                <div className="absolute bottom-0 inset-x-0 h-[10mm] bg-gradient-to-t from-black to-transparent opacity-40" />
+
+                                <div className="relative z-10 h-[10mm] bg-black/40 flex items-center justify-between px-[5mm] border-b border-white/5">
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="w-[3.5mm] h-[3.5mm] rounded-sm bg-eduGreen-600 flex items-center justify-center">
+                                            <Sparkles className="w-[2.5mm] h-[2.5mm] text-white" />
+                                        </div>
+                                        <span className="text-[7pt] font-black uppercase tracking-[0.2em] italic">{schoolName}</span>
                                     </div>
-                                    <div className="flex-1 space-y-[2mm]">
-                                        <h2 className="text-[12pt] font-black uppercase tracking-tight leading-tight">{fullName}</h2>
-                                        <div className="grid grid-cols-2 gap-[2mm] border-t-[0.5pt] pt-[2mm]">
+                                    <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[5pt] font-black uppercase tracking-widest text-zinc-400">
+                                        {roleTitle}
+                                    </span>
+                                </div>
+
+                                <div className="relative z-10 flex-1 flex flex-row items-center p-[5mm] gap-[6mm]">
+                                    <div className="w-[22mm] h-[22mm] rounded-[4mm] p-[0.3mm] bg-gradient-to-tr from-eduGreen-600 to-zinc-700 shadow-xl shrink-0">
+                                        <div className="w-full h-full rounded-[3.8mm] overflow-hidden bg-black relative border border-white/5">
+                                            {user.photoUrl ? (
+                                                <img src={user.photoUrl} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-[22pt] font-black text-zinc-800">{initial}</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 space-y-[3mm]">
+                                        <h2 className="text-[13pt] font-black uppercase tracking-tight leading-tight">{fullName}</h2>
+                                        <div className="grid grid-cols-2 gap-[2mm] border-t border-white/5 pt-[3mm]">
                                             <div>
-                                                <p className="text-[4pt] font-black uppercase text-zinc-400">ID Code</p>
-                                                <p className="text-[7pt] font-bold">{code}</p>
+                                                <p className="text-[4.5pt] font-black uppercase text-zinc-500 tracking-widest mb-0.5">ID Frequency</p>
+                                                <p className="text-[7.5pt] font-bold text-white font-mono">{code}</p>
                                             </div>
                                             <div>
-                                                <p className="text-[4pt] font-black uppercase text-zinc-400">Class</p>
-                                                <p className="text-[6pt] font-bold">{user.class?.grade?.name} • {user.class?.name}</p>
+                                                <p className="text-[4.5pt] font-black uppercase text-zinc-500 tracking-widest mb-0.5">Classification</p>
+                                                <p className="text-[6.5pt] font-bold text-zinc-300 uppercase truncate">{user.class?.grade?.name} • {user.class?.name}</p>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="h-[5mm] bg-zinc-50 border-t-[0.5pt] flex items-center justify-center opacity-30">
-                                    <span className="text-[4pt] font-black uppercase">Official Secure Identification</span>
+
+                                <div className="relative z-10 h-[6mm] bg-black/40 border-t border-white/5 flex items-center justify-between px-[5mm]">
+                                    <div className="flex items-center gap-1 opacity-40">
+                                        <ShieldCheck className="w-[3mm] h-[3mm]" />
+                                        <span className="text-[4.5pt] font-black uppercase tracking-[0.2em]">Verified Registry Interface</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <div className="w-[1mm] h-[1mm] rounded-full bg-eduGreen-500 shadow-[0_0_5px_#3BD68D]" />
+                                        <span className="text-[5pt] font-bold text-eduGreen-500 uppercase">Secured</span>
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Back Side Print Landscape */}
-                            <div className="relative w-[85.60mm] h-[53.98mm] border-[0.5pt] border-zinc-200 rounded-[3.18mm] overflow-hidden flex flex-row bg-white p-[5mm] items-center gap-[5mm]">
-                                <div className="flex-1 space-y-[3mm]">
-                                    <div className="border-b-[0.5pt] pb-[2mm]">
-                                        <h3 className="text-[5pt] font-black uppercase tracking-widest text-zinc-400 mb-[1mm]">Guardian Data</h3>
-                                        <p className="text-[8pt] font-bold uppercase">{user.guardianName}</p>
+                            <div className="relative w-[323.5px] h-[204px] rounded-[12px] overflow-hidden flex flex-row bg-zinc-950 text-white border border-zinc-900 p-[6mm] items-center gap-[6mm]" style={{ width: '85.60mm', height: '53.98mm' }}>
+                                {/* Pattern Overlay */}
+                                <div className="absolute inset-x-0 top-0 h-[15mm] bg-gradient-to-b from-white/5 to-transparent opacity-60" />
+
+                                <div className="relative z-10 flex-1 space-y-[5mm]">
+                                    <div className="border-b border-white/5 pb-[3mm]">
+                                        <div className="flex items-center gap-1.5 mb-[1.5mm]">
+                                            <User className="w-[3mm] h-[3mm] text-eduGreen-500" />
+                                            <h3 className="text-[6pt] font-black uppercase tracking-widest text-zinc-400">Guardian Hub</h3>
+                                        </div>
+                                        <p className="text-[9pt] font-black uppercase leading-none">{user.guardianName || "N/A"}</p>
+                                        <div className="flex justify-between items-end mt-1">
+                                            <p className="text-[5pt] font-bold text-eduGreen-500 uppercase tracking-widest">{user.guardianRelation || "Authorized Guardian"}</p>
+                                            <div className="text-right">
+                                                <p className="text-[4pt] font-black text-zinc-500 uppercase tracking-widest leading-none">Expires</p>
+                                                <p className="text-[6pt] font-bold text-white leading-none mt-0.5">{user.createdAt ? new Date(new Date(user.createdAt).setFullYear(new Date(user.createdAt).getFullYear() + 1)).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : "---"}</p>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="space-y-[1mm]">
-                                        <p className="text-[4pt] font-black uppercase text-zinc-400">Emergency Link</p>
-                                        <p className="text-[7pt] font-bold text-black">{user.guardianPhone}</p>
+                                    <div className="space-y-[2mm] bg-white/5 p-[2.5mm] rounded-[2.5mm] border border-white/5">
+                                        <p className="text-[4.5pt] font-black uppercase text-zinc-500 tracking-widest">Emergency Uplinks</p>
+                                        <div className="flex flex-col gap-0.5">
+                                            <p className="text-[8.5pt] font-bold text-white">{user.guardianPhone || "N/A"}</p>
+                                            {user.secondaryPhone && (
+                                                <p className="text-[6pt] font-medium text-white/50 pl-[3mm] border-l border-white/10">{user.secondaryPhone}</p>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="w-[30mm] flex flex-col items-center shrink-0 border-l-[0.5pt] pl-[5mm]">
-                                    <div className="p-1 border-[0.5pt] border-zinc-100 rounded">
-                                        <QRCode value={qrValue} size={70} />
+                                <div className="relative z-10 w-[35mm] flex flex-col items-center shrink-0 border-l border-white/5 pl-[6mm] gap-[3mm]">
+                                    <div className="p-[2.5mm] bg-white rounded-[4mm] shadow-2xl">
+                                        <QRCode value={qrValue} size={110} level="H" />
                                     </div>
-                                    <p className="text-[4pt] font-black uppercase tracking-widest text-zinc-300 mt-[2mm]">Verification Hub</p>
+                                    <div className="text-center">
+                                        <p className="text-[5.5pt] font-black uppercase tracking-[0.2em] text-zinc-500">Validation Protocol</p>
+                                        <p className="text-[4pt] font-bold text-zinc-700 uppercase tracking-widest">Cloud Encrypted Access</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>

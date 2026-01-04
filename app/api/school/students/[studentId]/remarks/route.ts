@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { handleApiError, requireRole, requireHomeroomAccess } from '@/lib/security';
 
-export async function GET(request: Request, { params }: { params: { studentId: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ studentId: string }> }) {
     try {
-        const studentId = params.studentId;
+        const { studentId } = await params;
         const student = await prisma.student.findUnique({
             where: { id: studentId },
             select: { classId: true }
@@ -30,9 +30,9 @@ export async function GET(request: Request, { params }: { params: { studentId: s
     }
 }
 
-export async function POST(request: Request, { params }: { params: { studentId: string } }) {
+export async function POST(request: Request, { params }: { params: Promise<{ studentId: string }> }) {
     try {
-        const studentId = params.studentId;
+        const { studentId } = await params;
         const student = await prisma.student.findUnique({
             where: { id: studentId },
             select: { classId: true }

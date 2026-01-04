@@ -16,6 +16,7 @@ import { cn, calculateAge } from "@/lib/utils";
 import { format } from "date-fns";
 import { IDCardModal } from "@/components/dashboard/id-card-modal";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ImageUpload } from "@/components/ui/image-upload";
@@ -61,7 +62,6 @@ export default function StudentProfilePage() {
         try {
             const res = await fetch(`/api/school/students/${studentId}/report-card`);
             const d = await res.json();
-            setData(d);
             setData(d);
             setRemarks(d.remarks || []);
             setNotes(d.internalNotes || []);
@@ -131,12 +131,16 @@ export default function StudentProfilePage() {
                 body: JSON.stringify({ content: newRemark, term: "CURRENT" })
             });
             if (res.ok) {
+                toast.success("Institutional Remark Synchronized");
                 setNewRemark("");
                 setIsAddingRemark(false);
                 fetchStudentData();
+            } else {
+                toast.error("Uplink Jammed: Remark Rejected");
             }
         } catch (e) {
             console.error(e);
+            toast.error("Signal Lost: Remark dropped");
         } finally {
             setSubmitting(false);
         }
@@ -151,12 +155,16 @@ export default function StudentProfilePage() {
                 body: JSON.stringify({ content: newNote })
             });
             if (res.ok) {
+                toast.success("Confidential Note Encrypted");
                 setNewNote("");
                 setIsAddingNote(false);
                 fetchStudentData();
+            } else {
+                toast.error("Security Breach: Note Rejected");
             }
         } catch (e) {
             console.error(e);
+            toast.error("Neural Link Offline: Note lost");
         } finally {
             setSubmitting(false);
         }
@@ -443,17 +451,34 @@ export default function StudentProfilePage() {
                             <Card className="bg-zinc-900/30 border-zinc-900 rounded-[2.5rem] p-8">
                                 <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-6">Subject Variance</h4>
                                 <div className="space-y-6">
-                                    {Array.from(new Set(grades.map((g: any) => g.subject?.name))).slice(0, 4).map((sub: any, i) => (
-                                        <div key={i} className="space-y-2">
-                                            <div className="flex justify-between text-[10px] font-black uppercase">
-                                                <span className="text-zinc-400">{sub}</span>
-                                                <span className="text-white">88%</span>
-                                            </div>
-                                            <div className="h-1.5 w-full bg-zinc-950 rounded-full overflow-hidden">
-                                                <div className="h-full bg-eduGreen-600 rounded-full shadow-[0_0_8px_rgba(33,201,141,0.5)]" style={{ width: '88%' }} />
-                                            </div>
-                                        </div>
-                                    ))}
+                                    {grades.length === 0 ? (
+                                        <div className="text-center py-10 opacity-30 text-[9px] font-black uppercase tracking-widest">No Subject Data Available</div>
+                                    ) : (
+                                        // Calculate subject variance dynamically
+                                        Array.from(new Set(grades.map((g: any) => g.subject?.name))).slice(0, 5).map((subjectName: any, i) => {
+                                            const subjectGrades = grades.filter((g: any) => g.subject?.name === subjectName);
+                                            const totalScore = subjectGrades.reduce((acc: number, curr: any) => {
+                                                const pct = curr.exam?.totalMarks ? (parseFloat(curr.score) / curr.exam.totalMarks) * 100 : parseFloat(curr.score);
+                                                return acc + pct;
+                                            }, 0);
+                                            const avg = Math.round(totalScore / subjectGrades.length);
+
+                                            return (
+                                                <div key={i} className="space-y-2">
+                                                    <div className="flex justify-between text-[10px] font-black uppercase">
+                                                        <span className="text-zinc-400">{subjectName}</span>
+                                                        <span className={cn("text-white", getPerformanceColor(avg).text)}>{avg}%</span>
+                                                    </div>
+                                                    <div className="h-1.5 w-full bg-zinc-950 rounded-full overflow-hidden border border-zinc-900/50">
+                                                        <div
+                                                            className={cn("h-full rounded-full shadow-[0_0_8px_rgba(33,201,141,0.3)] transition-all duration-1000", getPerformanceColor(avg).bg.replace('bg-', 'bg-').replace('/10', ''))}
+                                                            style={{ width: `${avg}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    )}
                                 </div>
                             </Card>
                         </div>
@@ -481,9 +506,45 @@ export default function StudentProfilePage() {
                                 <CardDescription className="text-zinc-600 font-bold uppercase tracking-widest text-[9px] mt-1">Historical attendance records</CardDescription>
                             </CardHeader>
                             <CardContent className="p-0">
-                                <div className="p-20 text-center opacity-30">
-                                    <p className="text-[10px] font-black uppercase tracking-widest">Attendance Heatmap Syncing...</p>
-                                </div>
+                                {attendance.history && attendance.history.length > 0 ? (
+                                    <div className="divide-y divide-zinc-950">
+                                        {attendance.history.map((record: any, i: number) => (
+                                            <div key={i} className="p-6 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
+                                                <div className="flex items-center gap-4">
+                                                    <div className={cn(
+                                                        "w-10 h-10 rounded-xl flex items-center justify-center border",
+                                                        record.status === 'PRESENT' ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" :
+                                                            record.status === 'ABSENT' ? "bg-red-500/10 border-red-500/20 text-red-500" :
+                                                                "bg-amber-500/10 border-amber-500/20 text-amber-500"
+                                                    )}>
+                                                        <Calendar className="w-4 h-4" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-[11px] font-black text-white uppercase tracking-tight">
+                                                            {new Date(record.date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+                                                        </div>
+                                                        <div className="text-[8px] font-bold text-zinc-600 uppercase tracking-[0.2em] mt-0.5">Verified Entry Node</div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <Badge className={cn(
+                                                        "rounded-lg px-3 py-1 text-[8px] font-black uppercase tracking-widest border-0",
+                                                        record.status === 'PRESENT' ? "bg-emerald-500/20 text-emerald-400" :
+                                                            record.status === 'ABSENT' ? "bg-red-500/20 text-red-400" :
+                                                                "bg-amber-500/20 text-amber-400"
+                                                    )}>
+                                                        {record.status}
+                                                    </Badge>
+                                                    <div className="text-[10px] font-mono text-zinc-700">08:00 AM</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="py-20 text-center opacity-30">
+                                        <p className="text-[10px] font-black uppercase tracking-widest">No Biometric Logs Discovered</p>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     </div>
@@ -627,6 +688,6 @@ export default function StudentProfilePage() {
                     </Card>
                 </TabsContent>
             </Tabs>
-        </div>
+        </div >
     );
 }

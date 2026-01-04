@@ -153,9 +153,15 @@ export default function StudentVerificationPage() {
                                 <span className="text-xs font-bold text-white uppercase">{student.guardianName || "N/A"}</span>
                             </div>
                             <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Frequency</span>
+                                <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Primary Uplink</span>
                                 <span className="text-xs font-bold text-eduGreen-500">{student.guardianPhone || "N/A"}</span>
                             </div>
+                            {student.secondaryPhone && (
+                                <div className="flex items-center justify-between pb-2 border-b border-zinc-900/50">
+                                    <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Secondary Uplink</span>
+                                    <span className="text-xs font-bold text-eduGreen-500/60 ">{student.secondaryPhone}</span>
+                                </div>
+                            )}
                         </div>
                     </Card>
                 </div>
